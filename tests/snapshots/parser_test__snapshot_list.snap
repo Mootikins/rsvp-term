@@ -1,0 +1,78 @@
+---
+source: tests/parser_test.rs
+expression: result.tokens
+---
+[
+    Token {
+        word: "First",
+        style: Normal,
+        block: ListItem(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "item",
+        style: Normal,
+        block: ListItem(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "Second",
+        style: Normal,
+        block: ListItem(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "item",
+        style: Normal,
+        block: ListItem(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "Third",
+        style: Normal,
+        block: ListItem(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "item",
+        style: Normal,
+        block: ListItem(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+]

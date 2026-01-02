@@ -1,0 +1,76 @@
+---
+source: tests/parser_test.rs
+expression: result.tokens
+---
+[
+    Token {
+        word: "This",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "is",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "a",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "quote",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "with",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "multiple",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 40,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "lines",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+]

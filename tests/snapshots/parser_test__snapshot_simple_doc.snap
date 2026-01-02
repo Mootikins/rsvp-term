@@ -1,0 +1,110 @@
+---
+source: tests/parser_test.rs
+expression: result.tokens
+---
+[
+    Token {
+        word: "Hello",
+        style: Normal,
+        block: Heading(
+            1,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "This",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "is",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 0,
+        },
+    },
+    Token {
+        word: "bold",
+        style: Bold,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "and",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "italic",
+        style: Italic,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "text.",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 200,
+            structure_modifier: 300,
+        },
+    },
+    Token {
+        word: "World",
+        style: Normal,
+        block: Heading(
+            2,
+        ),
+        timing_hint: TimingHint {
+            word_length_modifier: 0,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "Another",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 20,
+            punctuation_modifier: 0,
+            structure_modifier: 150,
+        },
+    },
+    Token {
+        word: "paragraph.",
+        style: Normal,
+        block: Paragraph,
+        timing_hint: TimingHint {
+            word_length_modifier: 80,
+            punctuation_modifier: 200,
+            structure_modifier: 300,
+        },
+    },
+]

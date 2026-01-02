@@ -1,3 +1,4 @@
+use insta::assert_debug_snapshot;
 use rsvp_term::parser::{MarkdownParser, DocumentParser};
 use rsvp_term::types::TokenStyle;
 
@@ -58,4 +59,37 @@ fn test_skip_image() {
     let words: Vec<&str> = result.tokens.iter().map(|t| t.word.as_str()).collect();
     assert!(!words.contains(&"alt"));
     assert!(!words.contains(&"image.png"));
+}
+
+// Snapshot tests for capturing full token/section structure
+
+#[test]
+fn test_snapshot_simple_doc() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str(
+        "# Hello\n\nThis is **bold** and *italic* text.\n\n## World\n\nAnother paragraph."
+    ).unwrap();
+
+    assert_debug_snapshot!(result.tokens);
+    assert_debug_snapshot!(result.sections);
+}
+
+#[test]
+fn test_snapshot_list() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str(
+        "- First item\n- Second item\n- Third item"
+    ).unwrap();
+
+    assert_debug_snapshot!(result.tokens);
+}
+
+#[test]
+fn test_snapshot_quote() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str(
+        "> This is a quote\n> with multiple lines"
+    ).unwrap();
+
+    assert_debug_snapshot!(result.tokens);
 }
