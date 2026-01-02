@@ -126,11 +126,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         // Advance word if not paused and in reading mode
-        if !app.is_paused() && app.view_mode() == ViewMode::Reading {
-            if last_advance.elapsed() >= next_duration {
-                app.advance();
-                last_advance = Instant::now();
-            }
+        if !app.is_paused() && app.view_mode() == ViewMode::Reading
+            && last_advance.elapsed() >= next_duration
+        {
+            app.advance();
+            last_advance = Instant::now();
         }
     }
 

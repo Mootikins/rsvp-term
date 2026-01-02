@@ -26,8 +26,6 @@ pub fn render(frame: &mut Frame, area: Rect) {
         Line::from("k/Up      Faster (+25 WPM)"),
         Line::from("h/Left    Rewind sentence"),
         Line::from("l/Right   Skip sentence"),
-        Line::from("H         Rewind paragraph"),
-        Line::from("L         Skip paragraph"),
         Line::from("o         Toggle outline"),
         Line::from("q         Quit"),
         Line::from("?         Toggle help"),
