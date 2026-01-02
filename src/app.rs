@@ -97,4 +97,19 @@ impl App {
         }
         None
     }
+
+    /// Get tokens around current position for context display
+    pub fn context_tokens(&self, before: usize, after: usize) -> (&[TimedToken], &[TimedToken]) {
+        let start = self.position.saturating_sub(before);
+        let end = (self.position + after + 1).min(self.tokens.len());
+
+        let before_slice = &self.tokens[start..self.position];
+        let after_slice = if self.position + 1 < end {
+            &self.tokens[self.position + 1..end]
+        } else {
+            &[]
+        };
+
+        (before_slice, after_slice)
+    }
 }

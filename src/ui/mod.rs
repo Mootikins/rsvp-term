@@ -20,7 +20,7 @@ pub fn render(frame: &mut Frame, app: &App) {
 
     match app.view_mode() {
         ViewMode::Reading => {
-            rsvp::render(frame, app, chunks[0]);
+            render_reading_view(frame, app, chunks[0]);
         }
         ViewMode::Outline => {
             outline::render(frame, app, chunks[0]);
@@ -28,4 +28,22 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     status::render(frame, app, chunks[1]);
+}
+
+fn render_reading_view(frame: &mut Frame, app: &App, area: ratatui::layout::Rect) {
+    use ratatui::layout::{Layout, Direction, Constraint};
+
+    // Split into: context above, RSVP line, context below
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(40),  // Context above
+            Constraint::Length(3),        // RSVP line (with padding)
+            Constraint::Percentage(40),  // Context below
+        ])
+        .split(area);
+
+    context::render_before(frame, app, chunks[0]);
+    rsvp::render(frame, app, chunks[1]);
+    context::render_after(frame, app, chunks[2]);
 }
