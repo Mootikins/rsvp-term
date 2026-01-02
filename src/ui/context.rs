@@ -1,12 +1,15 @@
 use ratatui::{
     Frame,
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::{Color, Style},
     text::{Line, Span},
     widgets::Paragraph,
 };
 use crate::app::App;
 use crate::types::{BlockContext, TimedToken};
+
+/// Left padding for context lines
+const LEFT_PADDING: usize = 4;
 
 pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
     let (before, _) = app.context_tokens(100, 0);
@@ -114,9 +117,13 @@ fn render_context_lines(
 
         let style = Style::default().fg(gray);
 
-        // Add block prefix
+        // Left padding + block prefix
         let prefix = block_prefix(&line_tokens[0].token.block);
-        let mut spans = vec![Span::styled(prefix, style)];
+        let padding = " ".repeat(LEFT_PADDING);
+        let mut spans = vec![
+            Span::raw(padding),
+            Span::styled(prefix, style),
+        ];
 
         // Add words
         for token in line_tokens.iter() {
@@ -140,9 +147,6 @@ fn render_context_lines(
             height: 1,
         };
 
-        frame.render_widget(
-            Paragraph::new(Line::from(spans)).alignment(Alignment::Center),
-            line_area,
-        );
+        frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
     }
 }
