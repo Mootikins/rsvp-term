@@ -152,7 +152,8 @@ fn walk_ast(
     sections: &mut Vec<Section>,
 ) {
     // Handle entering different node types
-    let (restore_style, restore_block, restore_skip) = enter_node(node, ctx, tokens, sections);
+    let (restore_style, restore_block, restore_skip, restore_list_depth, restore_quote_depth) =
+        enter_node(node, ctx, tokens, sections);
 
     // Process children
     for child in &node.children {
@@ -169,24 +170,39 @@ fn walk_ast(
     if restore_skip {
         ctx.skip_depth = ctx.skip_depth.saturating_sub(1);
     }
+    if restore_list_depth {
+        ctx.list_depth = ctx.list_depth.saturating_sub(1);
+    }
+    if restore_quote_depth {
+        ctx.quote_depth = ctx.quote_depth.saturating_sub(1);
+    }
 }
 
 /// Handle entering a node. Returns flags for what to restore on exit.
+/// Returns (restore_style, restore_block, restore_skip, restore_list_depth, restore_quote_depth)
 fn enter_node(
     node: &Node,
     ctx: &mut ParserContext,
     tokens: &mut Vec<Token>,
     sections: &mut Vec<Section>,
-) -> (bool, bool, bool) {
+) -> (bool, bool, bool, bool, bool) {
     let mut restore_style = false;
     let mut restore_block = false;
     let mut restore_skip = false;
+    let mut restore_list_depth = false;
+    let mut restore_quote_depth = false;
 
     // Skip code blocks and images entirely
     if node.is::<CodeFence>() || node.is::<Image>() {
         ctx.skip_depth += 1;
         restore_skip = true;
-        return (restore_style, restore_block, restore_skip);
+        return (
+            restore_style,
+            restore_block,
+            restore_skip,
+            restore_list_depth,
+            restore_quote_depth,
+        );
     }
 
     // Handle block-level elements
@@ -212,8 +228,10 @@ fn enter_node(
         ctx.quote_depth += 1;
         ctx.push_block(BlockContext::Quote(ctx.quote_depth));
         restore_block = true;
+        restore_quote_depth = true;
     } else if node.is::<BulletList>() || node.is::<OrderedList>() {
         ctx.list_depth += 1;
+        restore_list_depth = true;
     } else if node.is::<ListItem>() {
         ctx.push_block(BlockContext::ListItem(ctx.list_depth));
         restore_block = true;
@@ -261,7 +279,13 @@ fn enter_node(
         }
     }
 
-    (restore_style, restore_block, restore_skip)
+    (
+        restore_style,
+        restore_block,
+        restore_skip,
+        restore_list_depth,
+        restore_quote_depth,
+    )
 }
 
 #[cfg(test)]
@@ -305,5 +329,29 @@ mod tests {
         let result = parser.parse_str("***both***").unwrap();
         assert_eq!(result.tokens.len(), 1);
         assert_eq!(result.tokens[0].style, TokenStyle::BoldItalic);
+    }
+
+    #[test]
+    fn test_multiple_lists_depth_reset() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("- Item 1\n\n- Item 2\n\n- Item 3").unwrap();
+        // All should have depth 1, not 1, 2, 3 (depth must reset between lists)
+        for token in &result.tokens {
+            if let BlockContext::ListItem(depth) = &token.block {
+                assert_eq!(*depth, 1, "List depth should be 1, not cumulative");
+            }
+        }
+    }
+
+    #[test]
+    fn test_multiple_blockquotes_depth_reset() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("> Quote 1\n\n> Quote 2").unwrap();
+        // Both should have depth 1 (depth must reset between quotes)
+        for token in &result.tokens {
+            if let BlockContext::Quote(depth) = &token.block {
+                assert_eq!(*depth, 1, "Quote depth should be 1, not cumulative");
+            }
+        }
     }
 }
