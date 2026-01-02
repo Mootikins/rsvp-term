@@ -57,10 +57,10 @@ fn group_into_lines<'a>(tokens: &'a [TimedToken], max_width: usize) -> Vec<Vec<&
 /// Get block prefix for visual indication
 fn block_prefix(block: &BlockContext) -> &'static str {
     match block {
-        BlockContext::ListItem(_) => "• ",
-        BlockContext::Quote(_) => "│ ",
+        BlockContext::ListItem(_) => "* ",
+        BlockContext::Quote(_) => "| ",
         BlockContext::Heading(_) => "",
-        BlockContext::Callout(_) => "ℹ ",
+        BlockContext::Callout(_) => "[i] ",
         BlockContext::Paragraph => "",
     }
 }

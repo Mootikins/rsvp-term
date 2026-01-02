@@ -22,14 +22,14 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let section_title = app.current_section_title().unwrap_or("Document");
     let progress_pct = (app.progress() * 100.0).round() as u16;
     let top_line = Line::from(vec![
-        Span::raw("▸ "),
+        Span::raw("> "),
         Span::styled(section_title, Style::default().fg(Color::Cyan)),
         Span::raw(format!(" {:>3}%", progress_pct)),
     ]);
     frame.render_widget(Paragraph::new(top_line), chunks[0]);
 
     // Bottom line: progress bar, WPM, pause state
-    let pause_indicator = if app.is_paused() { "⏸" } else { "▶" };
+    let pause_indicator = if app.is_paused() { "||" } else { ">" };
     let label = format!("  {} WPM  {}", app.wpm(), pause_indicator);
 
     let gauge = Gauge::default()
