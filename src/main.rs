@@ -84,9 +84,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Render
         terminal.draw(|frame| ui::render(frame, &app))?;
 
-        // Calculate time until next word
+        // Calculate time until next word using CURRENT wpm (not pre-calculated)
         let next_duration = app.current_token()
-            .map(|t| Duration::from_millis(t.duration_ms))
+            .map(|t| Duration::from_millis(calculate_duration(&t.token, app.wpm())))
             .unwrap_or(Duration::from_millis(200));
 
         // Handle input with timeout
