@@ -37,6 +37,18 @@ struct Cli {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
+    // Validate file exists
+    if !cli.file.exists() {
+        eprintln!("Error: File not found: {}", cli.file.display());
+        std::process::exit(1);
+    }
+
+    // Validate file extension
+    let ext = cli.file.extension().and_then(|e| e.to_str()).unwrap_or("");
+    if ext != "md" && ext != "markdown" {
+        eprintln!("Warning: File may not be markdown: {}", cli.file.display());
+    }
+
     // Parse document
     let parser = MarkdownParser::new();
     let doc = parser.parse_file(&cli.file)?;
