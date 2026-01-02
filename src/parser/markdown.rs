@@ -13,8 +13,9 @@ use markdown_it::plugins::cmark::inline::{
     image::Image,
     link::Link,
 };
+use markdown_it::plugins::extra::tables::{Table, TableCell, TableRow};
 use markdown_it::parser::inline::Text;
-use markdown_it::{plugins::cmark, MarkdownIt, Node};
+use markdown_it::{plugins::cmark, plugins::extra, MarkdownIt, Node};
 
 use crate::parser::traits::{DocumentParser, ParseError, ParsedDocument};
 use crate::timing::generate_timing_hint;
@@ -26,10 +27,11 @@ pub struct MarkdownParser {
 }
 
 impl MarkdownParser {
-    /// Create a new markdown parser with CommonMark support.
+    /// Create a new markdown parser with CommonMark and GFM table support.
     pub fn new() -> Self {
         let mut md = MarkdownIt::new();
         cmark::add(&mut md);
+        extra::tables::add(&mut md);
         Self { md }
     }
 }
@@ -234,6 +236,12 @@ fn enter_node(
         restore_list_depth = true;
     } else if node.is::<ListItem>() {
         ctx.push_block(BlockContext::ListItem(ctx.list_depth));
+        restore_block = true;
+    } else if node.is::<Table>() || node.is::<TableRow>() {
+        // Tables and rows don't change block context, just pass through
+    } else if node.is::<TableCell>() {
+        // Each cell acts like a new block for timing purposes
+        ctx.push_block(BlockContext::Paragraph);
         restore_block = true;
     }
 

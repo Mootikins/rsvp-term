@@ -1,6 +1,6 @@
 use ratatui::{
     Frame,
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::Paragraph,
@@ -74,6 +74,9 @@ fn render_context_lines(
             height: 1,
         };
 
-        frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
+        frame.render_widget(
+            Paragraph::new(Line::from(spans)).alignment(Alignment::Center),
+            line_area,
+        );
     }
 }

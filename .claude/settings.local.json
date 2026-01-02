@@ -4,7 +4,18 @@
       "Bash(mkdir:*)",
       "WebFetch(domain:github.com)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\ndocs: add implementation plan\n\nTDD plan with 9 phases covering:\n- Project setup with dependencies\n- Core types \\(SOLID architecture\\)\n- ORP calculation\n- Timing logic with modifiers\n- Markdown parser with trait abstraction\n- Basic TUI \\(RSVP, status, outline\\)\n- Faded context lines\n- Polish and error handling\n- Integration tests\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\ndocs: add implementation plan\n\nTDD plan with 9 phases covering:\n- Project setup with dependencies\n- Core types \\(SOLID architecture\\)\n- ORP calculation\n- Timing logic with modifiers\n- Markdown parser with trait abstraction\n- Basic TUI \\(RSVP, status, outline\\)\n- Faded context lines\n- Polish and error handling\n- Integration tests\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(git -C /home/moot/rsvp-term status)",
+      "Bash(cargo run:*)",
+      "Bash(git -C /home/moot/rsvp-term log:*)",
+      "WebSearch",
+      "Bash(cargo test:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(git commit:*)",
+      "Bash(cargo build:*)",
+      "Bash(git rev-parse:*)",
+      "WebFetch(domain:docs.rs)"
     ]
   }
 }
