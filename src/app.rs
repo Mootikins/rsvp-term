@@ -14,6 +14,7 @@ pub struct App {
     paused: bool,
     view_mode: ViewMode,
     outline_selection: usize,
+    show_help: bool,
 }
 
 impl App {
@@ -26,6 +27,7 @@ impl App {
             paused: false,
             view_mode: ViewMode::Reading,
             outline_selection: 0,
+            show_help: false,
         }
     }
 
@@ -88,6 +90,10 @@ impl App {
             self.view_mode = ViewMode::Reading;
         }
     }
+
+    pub fn show_help(&self) -> bool { self.show_help }
+
+    pub fn toggle_help(&mut self) { self.show_help = !self.show_help; }
 
     pub fn current_section_title(&self) -> Option<&str> {
         for section in self.sections.iter().rev() {

@@ -103,7 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match (app.view_mode(), key.code) {
                         // Global
                         (_, KeyCode::Char('q')) => break,
-                        (_, KeyCode::Char('?')) => {} // TODO: help overlay
+                        (_, KeyCode::Char('?')) => app.toggle_help(),
 
                         // Reading mode
                         (ViewMode::Reading, KeyCode::Char(' ')) => app.toggle_pause(),

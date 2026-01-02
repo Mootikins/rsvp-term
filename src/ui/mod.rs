@@ -2,6 +2,7 @@ pub mod rsvp;
 pub mod status;
 pub mod outline;
 pub mod context;
+pub mod help;
 
 use ratatui::Frame;
 use crate::app::App;
@@ -28,6 +29,11 @@ pub fn render(frame: &mut Frame, app: &App) {
     }
 
     status::render(frame, app, chunks[1]);
+
+    // Render help overlay if active
+    if app.show_help() {
+        help::render(frame, frame.area());
+    }
 }
 
 fn render_reading_view(frame: &mut Frame, app: &App, area: ratatui::layout::Rect) {
