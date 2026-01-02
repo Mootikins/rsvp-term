@@ -27,16 +27,31 @@ fn group_into_lines<'a>(tokens: &'a [TimedToken], max_width: usize) -> Vec<Vec<&
     let mut current_line: Vec<&TimedToken> = Vec::new();
     let mut current_width = 0;
     let mut last_block: Option<&BlockContext> = None;
+    let mut in_table = false;
 
     for token in tokens {
-        // Start new line on block change (paragraph boundary)
-        let block_changed = last_block.map_or(false, |b| b != &token.token.block);
+        let is_table_cell = matches!(token.token.block, BlockContext::TableCell);
+        let was_in_table = in_table;
+        in_table = is_table_cell;
+
+        // Detect block transitions
+        let block_changed = last_block.map_or(false, |b| {
+            // Within table cells, don't break on cell boundaries
+            if is_table_cell && matches!(b, BlockContext::TableCell) {
+                false // Stay on same line, will add | separator
+            } else {
+                b != &token.token.block
+            }
+        });
+
+        // Transition into or out of table starts new line
+        let table_transition = was_in_table != in_table;
 
         // Also wrap if line is too long
-        let word_width = token.token.word.chars().count() + 1; // +1 for space
+        let word_width = token.token.word.chars().count() + 1;
         let would_overflow = current_width + word_width > max_width;
 
-        if (block_changed || would_overflow) && !current_line.is_empty() {
+        if (block_changed || table_transition || would_overflow) && !current_line.is_empty() {
             lines.push(current_line);
             current_line = Vec::new();
             current_width = 0;
@@ -62,6 +77,7 @@ fn block_prefix(block: &BlockContext) -> &'static str {
         BlockContext::Heading(_) => "",
         BlockContext::Callout(_) => "[i] ",
         BlockContext::Paragraph => "",
+        BlockContext::TableCell => "",
     }
 }
 
@@ -125,9 +141,19 @@ fn render_context_lines(
             Span::styled(prefix, style),
         ];
 
-        // Add words
-        for token in line_tokens.iter() {
+        // Add words, with | separators between table cells
+        let mut prev_was_table_cell = false;
+        for (j, token) in line_tokens.iter().enumerate() {
+            let is_table_cell = matches!(token.token.block, BlockContext::TableCell);
+            let is_new_cell = is_table_cell && token.token.timing_hint.structure_modifier > 0;
+
+            // Add cell separator if transitioning between table cells
+            if is_new_cell && prev_was_table_cell && j > 0 {
+                spans.push(Span::styled(" | ", style));
+            }
+
             spans.push(Span::styled(format!("{} ", token.token.word), style));
+            prev_was_table_cell = is_table_cell;
         }
 
         let y = if fade_up {

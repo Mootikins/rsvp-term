@@ -55,6 +55,8 @@ struct ParserContext {
     list_depth: usize,
     /// Whether we're inside a skippable element (code block, image)
     skip_depth: usize,
+    /// Flag set when entering a new block (cleared after first token)
+    new_block_entered: bool,
 }
 
 impl ParserContext {
@@ -65,6 +67,7 @@ impl ParserContext {
             quote_depth: 0,
             list_depth: 0,
             skip_depth: 0,
+            new_block_entered: false,
         }
     }
 
@@ -97,6 +100,7 @@ impl ParserContext {
 
     fn push_block(&mut self, block: BlockContext) {
         self.block_stack.push(block);
+        self.new_block_entered = true;
     }
 
     fn pop_block(&mut self) {
@@ -240,8 +244,8 @@ fn enter_node(
     } else if node.is::<Table>() || node.is::<TableRow>() {
         // Tables and rows don't change block context, just pass through
     } else if node.is::<TableCell>() {
-        // Each cell acts like a new block for timing purposes
-        ctx.push_block(BlockContext::Paragraph);
+        // Each cell is a distinct block for timing and rendering
+        ctx.push_block(BlockContext::TableCell);
         restore_block = true;
     }
 
@@ -273,7 +277,8 @@ fn enter_node(
                 // Check if this might be a paragraph end
                 // (simplified - we'd need more context for full accuracy)
                 let is_paragraph_end = is_last_word && word.ends_with(|c: char| ".!?".contains(c));
-                let is_new_block = tokens.is_empty() || i == 0;
+                // First word of a new block gets the new_block timing modifier
+                let is_new_block = ctx.new_block_entered || tokens.is_empty();
 
                 let timing_hint = generate_timing_hint(&word, is_paragraph_end, is_new_block);
 
@@ -283,6 +288,9 @@ fn enter_node(
                     block: ctx.current_block(),
                     timing_hint,
                 });
+
+                // Clear flag after first token in new block
+                ctx.new_block_entered = false;
             }
         }
     }

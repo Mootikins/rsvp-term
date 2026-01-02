@@ -50,7 +50,7 @@ expression: result.tokens
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
-            structure_modifier: 150,
+            structure_modifier: 0,
         },
     },
     Token {
