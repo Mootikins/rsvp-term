@@ -1,0 +1,15 @@
+[package]
+name = "rsvp-term"
+version = "0.1.0"
+edition = "2021"
+description = "TUI for RSVP reading of markdown prose"
+license = "MIT"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+markdown-it = "0.6"
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
+insta = "1.41"
