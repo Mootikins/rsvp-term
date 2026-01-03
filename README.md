@@ -2,6 +2,8 @@
 
 A terminal UI for RSVP (Rapid Serial Visual Presentation) speed reading of Markdown and EPUB files.
 
+![Demo](assets/demo.gif)
+
 ## What is RSVP?
 
 RSVP displays text one word at a time at a fixed position, eliminating eye movement and enabling faster reading. This implementation uses ORP (Optimal Recognition Point) highlighting - the letter your eye naturally focuses on is highlighted in red and centered.
