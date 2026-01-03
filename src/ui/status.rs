@@ -24,7 +24,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let top_line = Line::from(vec![
         Span::raw("> "),
         Span::styled(section_title, Style::default().fg(Color::Cyan)),
-        Span::raw(format!(" {:>3}%", progress_pct)),
+        Span::raw(format!(" {progress_pct:>3}%")),
     ]);
     frame.render_widget(Paragraph::new(top_line), chunks[0]);
 

@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::fs;
 use std::io::Cursor;
 use std::path::Path;
@@ -71,7 +72,7 @@ impl EpubParser {
     /// Returns [`ParseError::IoError`] if directory creation or file writing fails.
     pub fn export_chapters(&self, path: &Path) -> Result<(String, usize), ParseError> {
         let mut doc = EpubDoc::new(path).map_err(|e| {
-            ParseError::ParseError(format!("Failed to open EPUB: {}", e))
+            ParseError::ParseError(format!("Failed to open EPUB: {e}"))
         })?;
 
         let book_title = Self::get_book_title(&doc, path);
@@ -103,10 +104,10 @@ impl EpubParser {
             let chapter_title = Self::get_chapter_title(&doc, i)
                 .map(|t| Self::sanitize_filename(&t))
                 .filter(|s| !s.is_empty())
-                .unwrap_or_else(|| format!("chapter-{:02}", exported_count));
+                .unwrap_or_else(|| format!("chapter-{exported_count:02}"));
 
             // Write chapter file
-            let filename = format!("{:02}-{}.md", exported_count, chapter_title);
+            let filename = format!("{exported_count:02}-{chapter_title}.md");
             let filepath = output_dir.join(&filename);
 
             fs::write(&filepath, &markdown)?;
@@ -125,7 +126,7 @@ impl Default for EpubParser {
 impl DocumentParser for EpubParser {
     fn parse_file(&self, path: &Path) -> Result<ParsedDocument, ParseError> {
         let mut doc = EpubDoc::new(path).map_err(|e| {
-            ParseError::ParseError(format!("Failed to open EPUB: {}", e))
+            ParseError::ParseError(format!("Failed to open EPUB: {e}"))
         })?;
 
         let mut combined_markdown = String::new();
@@ -144,8 +145,7 @@ impl DocumentParser for EpubParser {
                 let title = Self::get_chapter_title(&doc, i)
                     .unwrap_or_else(|| format!("chapter {}", i + 1));
                 return Err(ParseError::ParseError(format!(
-                    "Failed to parse chapter {}: malformed XHTML",
-                    title
+                    "Failed to parse chapter {title}: malformed XHTML"
                 )));
             }
 
@@ -157,7 +157,7 @@ impl DocumentParser for EpubParser {
                 if !combined_markdown.is_empty() {
                     combined_markdown.push_str("\n\n");
                 }
-                combined_markdown.push_str(&format!("# {}\n\n", title));
+                let _ = write!(combined_markdown, "# {title}\n\n");
             }
 
             // Convert XHTML to markdown
