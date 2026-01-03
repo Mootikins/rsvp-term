@@ -38,6 +38,7 @@ pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
 /// A line with its tokens and their global indices
 struct DocLine<'a> {
     tokens: Vec<(usize, &'a TimedToken)>, // (global_index, token)
+    is_blank: bool, // True for separator lines between blocks
 }
 
 /// Compute document lines from tokens around current position
@@ -76,9 +77,14 @@ fn compute_document_lines(app: &App, width: usize) -> Vec<DocLine<'_>> {
         let would_overflow = current_width + word_width > max_chars;
 
         if (block_changed || table_transition || would_overflow) && !current_line.is_empty() {
-            lines.push(DocLine { tokens: current_line });
+            lines.push(DocLine { tokens: current_line, is_blank: false });
             current_line = Vec::new();
             current_width = 0;
+
+            // Insert blank line on block transitions (not just overflow)
+            if block_changed || table_transition {
+                lines.push(DocLine { tokens: Vec::new(), is_blank: true });
+            }
         }
 
         current_line.push((idx, token));
@@ -88,7 +94,7 @@ fn compute_document_lines(app: &App, width: usize) -> Vec<DocLine<'_>> {
     }
 
     if !current_line.is_empty() {
-        lines.push(DocLine { tokens: current_line });
+        lines.push(DocLine { tokens: current_line, is_blank: false });
     }
 
     lines
@@ -194,7 +200,8 @@ fn render_line(
     current_pos: usize,
     context_type: ContextType,
 ) {
-    if line.tokens.is_empty() {
+    // Blank separator lines - just skip (renders as empty space)
+    if line.is_blank || line.tokens.is_empty() {
         return;
     }
 
