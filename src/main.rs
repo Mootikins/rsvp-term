@@ -36,6 +36,10 @@ struct Cli {
     /// Export EPUB chapters to markdown files instead of reading
     #[arg(long)]
     export_md: bool,
+
+    /// Maximum width of context lines in characters (prevents reflow on wide terminals)
+    #[arg(long, default_value_t = rsvp_term::app::DEFAULT_CONTEXT_WIDTH)]
+    context_width: usize,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -86,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect();
 
     // Initialize app
-    let mut app = App::new(timed_tokens, doc.sections);
+    let mut app = App::with_context_width(timed_tokens, doc.sections, cli.context_width);
 
     // Setup terminal
     enable_raw_mode()?;

@@ -13,7 +13,7 @@ const LEFT_PADDING: usize = 4;
 
 /// Render context above the RSVP word
 pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
-    let lines = compute_document_lines(app, area.width as usize);
+    let lines = compute_document_lines(app, area.width as usize, app.context_width());
     let current_pos = app.position();
 
     // Find which line contains the current word
@@ -25,7 +25,7 @@ pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
 
 /// Render context below the RSVP word
 pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
-    let lines = compute_document_lines(app, area.width as usize);
+    let lines = compute_document_lines(app, area.width as usize, app.context_width());
     let current_pos = app.position();
 
     // Find which line contains the current word
@@ -42,15 +42,16 @@ struct DocLine<'a> {
 }
 
 /// Compute document lines from tokens around current position
-fn compute_document_lines(app: &App, width: usize) -> Vec<DocLine<'_>> {
+fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec<DocLine<'_>> {
     let tokens = app.tokens();
     let pos = app.position();
 
-    // Get a reasonable window around current position
-    let start = pos.saturating_sub(500);
+    // Always start from 0 to ensure consistent line breaks (no reflow)
+    let start = 0;
     let end = (pos + 500).min(tokens.len());
 
-    let max_chars = width.saturating_sub(LEFT_PADDING + 4);
+    // Use configurable max chars to prevent reflow on wide terminals
+    let max_chars = width.saturating_sub(LEFT_PADDING + 4).min(max_line_chars);
 
     let mut lines: Vec<DocLine> = Vec::new();
     let mut current_line: Vec<(usize, &TimedToken)> = Vec::new();

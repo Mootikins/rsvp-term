@@ -30,11 +30,11 @@ pub fn generate_timing_hint(word: &str, is_paragraph_end: bool, is_new_block: bo
     // Word length modifier - safe conversion with bounded fallback
     // Realistic words are < 50 chars, so values stay well under i32::MAX
     let word_length_modifier: i32 = if len > 10 {
-        let base = (10 - 6) * 10; // 40ms for chars 7-10
-        let extra = (len - 10) * 20; // 20ms per char over 10
+        let base = (10 - 6) * 20; // 80ms for chars 7-10
+        let extra = (len - 10) * 40; // 40ms per char over 10
         i32::try_from(base + extra).unwrap_or(1000)
     } else if len > 6 {
-        i32::try_from((len - 6) * 10).unwrap_or(40)
+        i32::try_from((len - 6) * 20).unwrap_or(80)
     } else {
         0
     };

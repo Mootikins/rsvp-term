@@ -58,7 +58,7 @@ expression: result.tokens
         style: Normal,
         block: Paragraph,
         timing_hint: TimingHint {
-            word_length_modifier: 20,
+            word_length_modifier: 40,
             punctuation_modifier: 0,
             structure_modifier: 0,
         },

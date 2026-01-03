@@ -15,10 +15,18 @@ pub struct App {
     view_mode: ViewMode,
     outline_selection: usize,
     show_help: bool,
+    context_width: usize,
 }
+
+/// Default context width in characters
+pub const DEFAULT_CONTEXT_WIDTH: usize = 100;
 
 impl App {
     pub fn new(tokens: Vec<TimedToken>, sections: Vec<Section>) -> Self {
+        Self::with_context_width(tokens, sections, DEFAULT_CONTEXT_WIDTH)
+    }
+
+    pub fn with_context_width(tokens: Vec<TimedToken>, sections: Vec<Section>, context_width: usize) -> Self {
         Self {
             tokens,
             sections,
@@ -28,6 +36,7 @@ impl App {
             view_mode: ViewMode::Reading,
             outline_selection: 0,
             show_help: false,
+            context_width,
         }
     }
 
@@ -104,6 +113,9 @@ impl App {
     pub const fn show_help(&self) -> bool { self.show_help }
 
     pub fn toggle_help(&mut self) { self.show_help = !self.show_help; }
+
+    #[must_use]
+    pub const fn context_width(&self) -> usize { self.context_width }
 
     #[must_use]
     pub fn current_section_title(&self) -> Option<&str> {

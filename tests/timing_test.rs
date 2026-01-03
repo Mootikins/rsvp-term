@@ -77,19 +77,19 @@ fn test_hint_short_word() {
 
 #[test]
 fn test_hint_long_word() {
-    // "beautiful" = 9 chars, 3 extra over 6 = 30ms
+    // "beautiful" = 9 chars, 3 extra over 6 = 60ms
     let hint = generate_timing_hint("beautiful", false, false);
-    assert_eq!(hint.word_length_modifier, 30);
+    assert_eq!(hint.word_length_modifier, 60);
 }
 
 #[test]
 fn test_hint_very_long_word() {
     // "extraordinary" = 13 chars
-    // > 6: (min(len,10) - 6) * 10 = (10-6)*10 = 40
-    // > 10: (len - 10) * 20 = (13-10)*20 = 60
-    // total = 40 + 60 = 100
+    // > 6: (min(len,10) - 6) * 20 = (10-6)*20 = 80
+    // > 10: (len - 10) * 40 = (13-10)*40 = 120
+    // total = 80 + 120 = 200
     let hint = generate_timing_hint("extraordinary", false, false);
-    assert_eq!(hint.word_length_modifier, 100);
+    assert_eq!(hint.word_length_modifier, 200);
 }
 
 #[test]

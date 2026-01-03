@@ -92,7 +92,7 @@ expression: result.tokens
         style: Normal,
         block: Paragraph,
         timing_hint: TimingHint {
-            word_length_modifier: 10,
+            word_length_modifier: 20,
             punctuation_modifier: 0,
             structure_modifier: 150,
         },
@@ -102,7 +102,7 @@ expression: result.tokens
         style: Normal,
         block: Paragraph,
         timing_hint: TimingHint {
-            word_length_modifier: 40,
+            word_length_modifier: 80,
             punctuation_modifier: 200,
             structure_modifier: 300,
         },
