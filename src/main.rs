@@ -9,7 +9,7 @@ use std::{io::stdout, time::{Duration, Instant}};
 
 use rsvp_term::{
     app::{App, ViewMode},
-    parser::{MarkdownParser, DocumentParser},
+    parser::{DocumentParser, EpubParser, MarkdownParser},
     timing::calculate_duration,
     orp::calculate_orp,
     types::TimedToken,
@@ -28,10 +28,14 @@ impl Drop for TerminalGuard {
 
 #[derive(ClapParser)]
 #[command(name = "rsvp-term")]
-#[command(about = "TUI for RSVP reading of markdown prose")]
+#[command(about = "TUI for RSVP reading of markdown and EPUB files")]
 struct Cli {
-    /// Markdown file to read
+    /// File to read (markdown or EPUB)
     file: std::path::PathBuf,
+
+    /// Export EPUB chapters to markdown files instead of reading
+    #[arg(long)]
+    export_md: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -43,15 +47,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    // Validate file extension
+    // Detect file type by extension
     let ext = cli.file.extension().and_then(|e| e.to_str()).unwrap_or("");
-    if ext != "md" && ext != "markdown" {
-        eprintln!("Warning: File may not be markdown: {}", cli.file.display());
+    let is_epub = ext.eq_ignore_ascii_case("epub");
+
+    // Handle EPUB export mode
+    if cli.export_md {
+        if !is_epub {
+            eprintln!("Error: --export-md only works with EPUB files");
+            std::process::exit(1);
+        }
+        let parser = EpubParser::new();
+        let (book_title, count) = parser.export_chapters(&cli.file)?;
+        println!("Exported {} chapters to ./{}/", count, book_title);
+        return Ok(());
     }
 
-    // Parse document
-    let parser = MarkdownParser::new();
-    let doc = parser.parse_file(&cli.file)?;
+    // Parse document based on file type
+    let doc = if is_epub {
+        EpubParser::new().parse_file(&cli.file)?
+    } else {
+        MarkdownParser::new().parse_file(&cli.file)?
+    };
 
     // Convert to timed tokens
     let wpm = 300u16;
