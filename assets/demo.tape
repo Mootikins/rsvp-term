@@ -1,7 +1,7 @@
 # VHS Demo for rsvp-term
 # https://github.com/charmbracelet/vhs
 
-Output demo.gif
+Output assets/demo.gif
 
 Set FontSize 16
 Set Width 1000
