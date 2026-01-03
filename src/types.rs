@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenStyle {
     Normal,
     Bold,
@@ -8,7 +8,7 @@ pub enum TokenStyle {
     Link(String),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BlockContext {
     Paragraph,
     ListItem(usize),    // depth
@@ -18,7 +18,7 @@ pub enum BlockContext {
     TableCell(usize),   // table cell with row number (0-indexed)
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TimingHint {
     pub word_length_modifier: i32,
     pub punctuation_modifier: i32,
