@@ -32,15 +32,24 @@ impl App {
     }
 
     // Getters
-    pub fn position(&self) -> usize { self.position }
-    pub fn wpm(&self) -> u16 { self.wpm }
-    pub fn is_paused(&self) -> bool { self.paused }
-    pub fn view_mode(&self) -> ViewMode { self.view_mode }
+    #[must_use]
+    pub const fn position(&self) -> usize { self.position }
+    #[must_use]
+    pub const fn wpm(&self) -> u16 { self.wpm }
+    #[must_use]
+    pub const fn is_paused(&self) -> bool { self.paused }
+    #[must_use]
+    pub const fn view_mode(&self) -> ViewMode { self.view_mode }
+    #[must_use]
     pub fn current_token(&self) -> Option<&TimedToken> { self.tokens.get(self.position) }
+    #[must_use]
     pub fn tokens(&self) -> &[TimedToken] { &self.tokens }
+    #[must_use]
     pub fn sections(&self) -> &[Section] { &self.sections }
-    pub fn outline_selection(&self) -> usize { self.outline_selection }
+    #[must_use]
+    pub const fn outline_selection(&self) -> usize { self.outline_selection }
 
+    #[must_use]
     pub fn progress(&self) -> f64 {
         if self.tokens.is_empty() { 0.0 }
         else { self.position as f64 / self.tokens.len() as f64 }
@@ -91,10 +100,12 @@ impl App {
         }
     }
 
-    pub fn show_help(&self) -> bool { self.show_help }
+    #[must_use]
+    pub const fn show_help(&self) -> bool { self.show_help }
 
     pub fn toggle_help(&mut self) { self.show_help = !self.show_help; }
 
+    #[must_use]
     pub fn current_section_title(&self) -> Option<&str> {
         for section in self.sections.iter().rev() {
             if self.position >= section.token_start {
@@ -105,6 +116,7 @@ impl App {
     }
 
     /// Get tokens around current position for context display
+    #[must_use]
     pub fn context_tokens(&self, before: usize, after: usize) -> (&[TimedToken], &[TimedToken]) {
         let start = self.position.saturating_sub(before);
         let end = (self.position + after + 1).min(self.tokens.len());
