@@ -20,13 +20,13 @@ pub fn calculate_duration(token: &Token, wpm: u16) -> u64 {
 pub fn generate_timing_hint(word: &str, is_paragraph_end: bool, is_new_block: bool) -> TimingHint {
     let len = word.chars().count();
 
-    // Word length modifier
+    // Word length modifier (modest extra time for longer words)
     let word_length_modifier = if len > 10 {
-        let base = (10 - 6) * 20; // 80ms for chars 7-10
-        let extra = (len - 10) * 40; // 40ms per char over 10
+        let base = (10 - 6) * 10; // 40ms for chars 7-10
+        let extra = (len - 10) * 20; // 20ms per char over 10
         (base + extra) as i32
     } else if len > 6 {
-        ((len - 6) * 20) as i32
+        ((len - 6) * 10) as i32
     } else {
         0
     };

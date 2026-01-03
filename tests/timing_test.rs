@@ -27,12 +27,12 @@ fn test_base_timing_600_wpm() {
 #[test]
 fn test_long_word_modifier() {
     let hint = TimingHint {
-        word_length_modifier: 60, // 3 extra chars * 20ms
+        word_length_modifier: 30, // 3 extra chars * 10ms
         ..Default::default()
     };
     let token = make_token("extraordinary", hint);
     let duration = calculate_duration(&token, 300);
-    assert_eq!(duration, 260); // 200 + 60
+    assert_eq!(duration, 230); // 200 + 30
 }
 
 #[test]
@@ -60,13 +60,13 @@ fn test_structure_modifier() {
 #[test]
 fn test_combined_modifiers() {
     let hint = TimingHint {
-        word_length_modifier: 40,
+        word_length_modifier: 20,
         punctuation_modifier: 150,
         structure_modifier: 0,
     };
     let token = make_token("sentence,", hint);
     let duration = calculate_duration(&token, 300);
-    assert_eq!(duration, 390); // 200 + 40 + 150
+    assert_eq!(duration, 370); // 200 + 20 + 150
 }
 
 #[test]
@@ -77,19 +77,19 @@ fn test_hint_short_word() {
 
 #[test]
 fn test_hint_long_word() {
-    // "beautiful" = 9 chars, 3 extra over 6 = 60ms
+    // "beautiful" = 9 chars, 3 extra over 6 = 30ms
     let hint = generate_timing_hint("beautiful", false, false);
-    assert_eq!(hint.word_length_modifier, 60);
+    assert_eq!(hint.word_length_modifier, 30);
 }
 
 #[test]
 fn test_hint_very_long_word() {
     // "extraordinary" = 13 chars
-    // > 6: (min(len,10) - 6) * 20 = (10-6)*20 = 80
-    // > 10: (len - 10) * 40 = (13-10)*40 = 120
-    // total = 80 + 120 = 200
+    // > 6: (min(len,10) - 6) * 10 = (10-6)*10 = 40
+    // > 10: (len - 10) * 20 = (13-10)*20 = 60
+    // total = 40 + 60 = 100
     let hint = generate_timing_hint("extraordinary", false, false);
-    assert_eq!(hint.word_length_modifier, 200);
+    assert_eq!(hint.word_length_modifier, 100);
 }
 
 #[test]
