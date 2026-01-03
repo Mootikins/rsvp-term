@@ -61,6 +61,14 @@ impl EpubParser {
     }
 
     /// Export each chapter as a separate markdown file.
+    ///
+    /// Creates a directory named after the book title and writes each
+    /// chapter as a numbered markdown file.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParseError::ParseError`] if the EPUB cannot be opened.
+    /// Returns [`ParseError::IoError`] if directory creation or file writing fails.
     pub fn export_chapters(&self, path: &Path) -> Result<(String, usize), ParseError> {
         let mut doc = EpubDoc::new(path).map_err(|e| {
             ParseError::ParseError(format!("Failed to open EPUB: {}", e))

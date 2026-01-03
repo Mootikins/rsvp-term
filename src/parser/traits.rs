@@ -3,10 +3,19 @@ use std::path::Path;
 
 /// Trait for document parsers (enables future EPUB support)
 pub trait DocumentParser {
-    /// Parse document from file path
+    /// Parse document from file path.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParseError::IoError`] if the file cannot be read.
+    /// Returns [`ParseError::ParseError`] if the content is malformed.
     fn parse_file(&self, path: &Path) -> Result<ParsedDocument, ParseError>;
 
-    /// Parse document from string content
+    /// Parse document from string content.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParseError::ParseError`] if the content is malformed.
     fn parse_str(&self, content: &str) -> Result<ParsedDocument, ParseError>;
 }
 
