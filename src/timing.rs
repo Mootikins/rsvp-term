@@ -8,25 +8,31 @@ use crate::types::{TimingHint, Token};
 /// - Plus timing hint modifiers for word length, punctuation, structure
 /// - Minimum duration is 50ms to prevent too-fast display
 pub fn calculate_duration(token: &Token, wpm: u16) -> u64 {
-    let base_ms = 60_000 / wpm as u64;
-    let modifiers = token.timing_hint.word_length_modifier
-        + token.timing_hint.punctuation_modifier
-        + token.timing_hint.structure_modifier;
+    let base_ms = 60_000_u64 / u64::from(wpm);
+    let modifiers = i64::from(token.timing_hint.word_length_modifier)
+        + i64::from(token.timing_hint.punctuation_modifier)
+        + i64::from(token.timing_hint.structure_modifier);
 
-    (base_ms as i64 + modifiers as i64).max(50) as u64
+    // Safe: base_ms is at most 60000, modifiers are small i32s summing to < 1000
+    // Result after max(50) is always positive and fits in u64
+    #[allow(clippy::cast_sign_loss)]
+    {
+        (i64::try_from(base_ms).unwrap_or(i64::MAX) + modifiers).max(50) as u64
+    }
 }
 
 /// Generate timing hints based on word characteristics.
 pub fn generate_timing_hint(word: &str, is_paragraph_end: bool, is_new_block: bool) -> TimingHint {
     let len = word.chars().count();
 
-    // Word length modifier (modest extra time for longer words)
-    let word_length_modifier = if len > 10 {
+    // Word length modifier - safe conversion with bounded fallback
+    // Realistic words are < 50 chars, so values stay well under i32::MAX
+    let word_length_modifier: i32 = if len > 10 {
         let base = (10 - 6) * 10; // 40ms for chars 7-10
         let extra = (len - 10) * 20; // 20ms per char over 10
-        (base + extra) as i32
+        i32::try_from(base + extra).unwrap_or(1000)
     } else if len > 6 {
-        ((len - 6) * 10) as i32
+        i32::try_from((len - 6) * 10).unwrap_or(40)
     } else {
         0
     };
