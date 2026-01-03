@@ -11,14 +11,99 @@ use crate::types::{BlockContext, TimedToken};
 /// Left padding for context lines
 const LEFT_PADDING: usize = 4;
 
+/// Render context above the RSVP word
 pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
-    let (before, _) = app.context_tokens(100, 0);
-    render_context_lines(frame, before, area, true);
+    let lines = compute_document_lines(app, area.width as usize);
+    let current_pos = app.position();
+
+    // Find which line contains the current word
+    let (line_idx, _) = find_position_in_lines(&lines, current_pos);
+
+    // Render lines up to and including current line (words before current_pos shown, rest blanked)
+    render_lines_before(frame, &lines, line_idx, current_pos, area);
 }
 
+/// Render context below the RSVP word
 pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
-    let (_, after) = app.context_tokens(0, 100);
-    render_context_lines(frame, after, area, false);
+    let lines = compute_document_lines(app, area.width as usize);
+    let current_pos = app.position();
+
+    // Find which line contains the current word
+    let (line_idx, _) = find_position_in_lines(&lines, current_pos);
+
+    // Render lines from current line onward (words after current_pos shown, rest blanked)
+    render_lines_after(frame, &lines, line_idx, current_pos, area);
+}
+
+/// A line with its tokens and their global indices
+struct DocLine<'a> {
+    tokens: Vec<(usize, &'a TimedToken)>, // (global_index, token)
+}
+
+/// Compute document lines from tokens around current position
+fn compute_document_lines(app: &App, width: usize) -> Vec<DocLine<'_>> {
+    let tokens = app.tokens();
+    let pos = app.position();
+
+    // Get a reasonable window around current position
+    let start = pos.saturating_sub(500);
+    let end = (pos + 500).min(tokens.len());
+
+    let max_chars = width.saturating_sub(LEFT_PADDING + 4);
+
+    let mut lines: Vec<DocLine> = Vec::new();
+    let mut current_line: Vec<(usize, &TimedToken)> = Vec::new();
+    let mut current_width = 0;
+    let mut last_block: Option<&BlockContext> = None;
+    let mut last_table_row: Option<usize> = None;
+
+    for (idx, token) in tokens.iter().enumerate().skip(start).take(end - start) {
+        let current_table_row = table_row(&token.token.block);
+        let is_table_cell = current_table_row.is_some();
+        let was_in_table = last_table_row.is_some();
+
+        // Detect block transitions
+        let block_changed = last_block.is_some_and(|b| {
+            if is_table_cell && was_in_table {
+                current_table_row != last_table_row
+            } else {
+                b != &token.token.block
+            }
+        });
+
+        let table_transition = was_in_table != is_table_cell;
+        let word_width = token.token.word.chars().count() + 1;
+        let would_overflow = current_width + word_width > max_chars;
+
+        if (block_changed || table_transition || would_overflow) && !current_line.is_empty() {
+            lines.push(DocLine { tokens: current_line });
+            current_line = Vec::new();
+            current_width = 0;
+        }
+
+        current_line.push((idx, token));
+        current_width += word_width;
+        last_block = Some(&token.token.block);
+        last_table_row = current_table_row;
+    }
+
+    if !current_line.is_empty() {
+        lines.push(DocLine { tokens: current_line });
+    }
+
+    lines
+}
+
+/// Find which line and word index contains the given global position
+fn find_position_in_lines(lines: &[DocLine], pos: usize) -> (usize, usize) {
+    for (line_idx, line) in lines.iter().enumerate() {
+        for (word_idx, (global_idx, _)) in line.tokens.iter().enumerate() {
+            if *global_idx == pos {
+                return (line_idx, word_idx);
+            }
+        }
+    }
+    (0, 0)
 }
 
 /// Extract row number from a table cell block context
@@ -27,56 +112,6 @@ fn table_row(block: &BlockContext) -> Option<usize> {
         BlockContext::TableCell(row) => Some(*row),
         _ => None,
     }
-}
-
-/// Group tokens into logical lines based on block context and width
-fn group_into_lines(tokens: &[TimedToken], max_width: usize) -> Vec<Vec<&TimedToken>> {
-    let mut lines: Vec<Vec<&TimedToken>> = Vec::new();
-    let mut current_line: Vec<&TimedToken> = Vec::new();
-    let mut current_width = 0;
-    let mut last_block: Option<&BlockContext> = None;
-    let mut last_table_row: Option<usize> = None;
-
-    for token in tokens {
-        let current_table_row = table_row(&token.token.block);
-        let is_table_cell = current_table_row.is_some();
-        let was_in_table = last_table_row.is_some();
-
-        // Detect block transitions
-        let block_changed = last_block.is_some_and(|b| {
-            // Within table cells in same row, don't break on cell boundaries
-            if is_table_cell && was_in_table {
-                // Different row = new line
-                current_table_row != last_table_row
-            } else {
-                b != &token.token.block
-            }
-        });
-
-        // Transition into or out of table starts new line
-        let table_transition = was_in_table != is_table_cell;
-
-        // Also wrap if line is too long
-        let word_width = token.token.word.chars().count() + 1;
-        let would_overflow = current_width + word_width > max_width;
-
-        if (block_changed || table_transition || would_overflow) && !current_line.is_empty() {
-            lines.push(current_line);
-            current_line = Vec::new();
-            current_width = 0;
-        }
-
-        current_line.push(token);
-        current_width += word_width;
-        last_block = Some(&token.token.block);
-        last_table_row = current_table_row;
-    }
-
-    if !current_line.is_empty() {
-        lines.push(current_line);
-    }
-
-    lines
 }
 
 /// Get block prefix for visual indication
@@ -91,99 +126,142 @@ fn block_prefix(block: &BlockContext) -> &'static str {
     }
 }
 
-fn render_context_lines(
-    frame: &mut Frame,
-    tokens: &[TimedToken],
-    area: Rect,
-    fade_up: bool,
-) {
-    if tokens.is_empty() || area.height == 0 || area.width < 10 {
+/// Render lines before the current line (above context)
+fn render_lines_before(frame: &mut Frame, lines: &[DocLine], current_line_idx: usize, current_pos: usize, area: Rect) {
+    if area.height == 0 {
         return;
     }
 
-    // Group tokens respecting paragraph boundaries
-    let max_chars_per_line = (area.width as usize).saturating_sub(4); // margin
-    let lines = group_into_lines(tokens, max_chars_per_line);
+    let num_lines = area.height as usize;
+    // Include current line (it will show words before current_pos)
+    let end_line = (current_line_idx + 1).min(lines.len());
+    let start_line = end_line.saturating_sub(num_lines);
+    let lines_to_show: Vec<_> = lines[start_line..end_line].iter().collect();
+
+    // Render from top to bottom, with fading (farther = dimmer)
+    for (i, line) in lines_to_show.iter().enumerate() {
+        let distance_from_bottom = lines_to_show.len() - 1 - i;
+        let y = area.y + (area.height as usize - lines_to_show.len() + i) as u16;
+
+        if y < area.y || y >= area.y + area.height {
+            continue;
+        }
+
+        render_line(frame, line, y, area.width, distance_from_bottom, current_pos, ContextType::Before);
+    }
+}
+
+/// Render lines after the current word (below context)
+fn render_lines_after(
+    frame: &mut Frame,
+    lines: &[DocLine],
+    current_line_idx: usize,
+    current_pos: usize,
+    area: Rect,
+) {
+    if area.height == 0 || current_line_idx >= lines.len() {
+        return;
+    }
 
     let num_lines = area.height as usize;
-    let display_lines: Vec<_> = if fade_up {
-        // For "before" context: show most recent lines at bottom
-        lines.into_iter().rev().take(num_lines).collect::<Vec<_>>()
-    } else {
-        // For "after" context: show next lines at top
-        lines.into_iter().take(num_lines).collect()
-    };
+    let end_line = (current_line_idx + num_lines).min(lines.len());
+    let lines_to_show = &lines[current_line_idx..end_line];
 
-    // Reverse again for fade_up so index 0 = closest to RSVP word
-    let display_lines: Vec<_> = if fade_up {
-        display_lines.into_iter().rev().collect()
-    } else {
-        display_lines
-    };
-
-    for (i, line_tokens) in display_lines.iter().enumerate() {
-        if line_tokens.is_empty() {
-            continue;
-        }
-
-        // Distance from RSVP word determines brightness
-        let distance = if fade_up {
-            display_lines.len() - 1 - i // bottom = closest = brightest
-        } else {
-            i // top = closest = brightest
-        };
-
-        let gray = match distance {
-            0 => Color::Rgb(200, 200, 200),
-            1 => Color::Rgb(150, 150, 150),
-            2 => Color::Rgb(110, 110, 110),
-            3 => Color::Rgb(80, 80, 80),
-            _ => Color::Rgb(60, 60, 60),
-        };
-
-        let style = Style::default().fg(gray);
-
-        // Left padding + block prefix
-        let prefix = block_prefix(&line_tokens[0].token.block);
-        let padding = " ".repeat(LEFT_PADDING);
-        let mut spans = vec![
-            Span::raw(padding),
-            Span::styled(prefix, style),
-        ];
-
-        // Add words, with | separators between table cells
-        let mut prev_table_row: Option<usize> = None;
-        for (j, token) in line_tokens.iter().enumerate() {
-            let current_row = table_row(&token.token.block);
-            let is_new_cell = current_row.is_some() && token.token.timing_hint.structure_modifier > 0;
-
-            // Add cell separator between cells in same row
-            if is_new_cell && prev_table_row.is_some() && j > 0 {
-                spans.push(Span::styled(" | ", style));
-            }
-
-            spans.push(Span::styled(format!("{} ", token.token.word), style));
-            prev_table_row = current_row;
-        }
-
-        // Add trailing | for table rows
-        if prev_table_row.is_some() {
-            spans.push(Span::styled("|", style));
-        }
-
+    // Render lines, with fading (farther = dimmer)
+    for (i, line) in lines_to_show.iter().enumerate() {
         let y = area.y + i as u16;
-
         if y >= area.y + area.height {
-            continue;
+            break;
         }
 
-        let line_area = Rect {
-            x: area.x,
-            y,
-            width: area.width,
-            height: 1,
+        render_line(frame, line, y, area.width, i, current_pos, ContextType::After);
+    }
+}
+
+/// Mode for rendering words - either show text or blank spaces
+#[derive(Clone, Copy, PartialEq)]
+enum WordMode {
+    Visible,
+    Blank,
+}
+
+/// Render a single line at the given y position
+/// Words are shown or blanked based on their position relative to current_pos
+fn render_line(
+    frame: &mut Frame,
+    line: &DocLine,
+    y: u16,
+    width: u16,
+    distance: usize,
+    current_pos: usize,
+    context_type: ContextType,
+) {
+    if line.tokens.is_empty() {
+        return;
+    }
+
+    let gray = match distance {
+        0 => Color::Rgb(200, 200, 200),
+        1 => Color::Rgb(150, 150, 150),
+        2 => Color::Rgb(110, 110, 110),
+        3 => Color::Rgb(80, 80, 80),
+        _ => Color::Rgb(60, 60, 60),
+    };
+    let style = Style::default().fg(gray);
+
+    let first_token = &line.tokens[0].1;
+    let prefix = block_prefix(&first_token.token.block);
+
+    let padding = " ".repeat(LEFT_PADDING);
+    let mut spans = vec![
+        Span::raw(padding),
+        Span::styled(prefix, style),
+    ];
+
+    // Add words - visible or blank depending on position
+    let mut prev_table_row: Option<usize> = None;
+    for (j, (global_idx, token)) in line.tokens.iter().enumerate() {
+        let current_row = table_row(&token.token.block);
+        let is_new_cell = current_row.is_some() && token.token.timing_hint.structure_modifier > 0;
+
+        // Add cell separator between cells in same row
+        if is_new_cell && prev_table_row.is_some() && j > 0 {
+            spans.push(Span::styled(" | ", style));
+        }
+
+        // Determine if this word should be visible or blank
+        let mode = match context_type {
+            ContextType::Before => {
+                // In "before" context: show words before current_pos, blank others
+                if *global_idx < current_pos { WordMode::Visible } else { WordMode::Blank }
+            }
+            ContextType::After => {
+                // In "after" context: show words after current_pos, blank others
+                if *global_idx > current_pos { WordMode::Visible } else { WordMode::Blank }
+            }
         };
 
-        frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
+        let word_text = format!("{} ", token.token.word);
+        let display_text = match mode {
+            WordMode::Visible => word_text,
+            WordMode::Blank => " ".repeat(token.token.word.chars().count() + 1),
+        };
+
+        spans.push(Span::styled(display_text, style));
+        prev_table_row = current_row;
     }
+
+    // Add trailing | for table rows
+    if prev_table_row.is_some() {
+        spans.push(Span::styled("|", style));
+    }
+
+    let line_area = Rect { x: 0, y, width, height: 1 };
+    frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
+}
+
+#[derive(Clone, Copy)]
+enum ContextType {
+    Before,
+    After,
 }

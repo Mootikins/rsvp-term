@@ -1,0 +1,2 @@
+# Ignore downloaded test files (EPUBs can be large)
+*.epub
