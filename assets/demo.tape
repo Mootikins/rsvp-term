@@ -10,7 +10,7 @@ Set Theme "Catppuccin Mocha"
 Set TypingSpeed 50ms
 
 # Show the command
-Type "rsvp-term assets/demo-sample.md"
+Type "rsvp-term assets/alice-chapter2.md"
 Sleep 500ms
 Enter
 Sleep 2s
@@ -22,13 +22,13 @@ Sleep 4s
 Type " "
 Sleep 1.5s
 
-# Speed up (press k three times)
-Type "kkk"
+# Speed up (press k four times to 400 WPM)
+Type "kkkk"
 Sleep 1s
 
 # Resume at faster speed
 Type " "
-Sleep 3s
+Sleep 4s
 
 # Show help overlay
 Type "?"
@@ -38,20 +38,8 @@ Sleep 2.5s
 Type "?"
 Sleep 1s
 
-# Open outline view
-Type "o"
-Sleep 2s
-
-# Navigate down
-Type "jj"
-Sleep 1s
-
-# Select and jump
-Enter
-Sleep 2s
-
-# Let it read a bit more
-Sleep 2s
+# Let it read more
+Sleep 3s
 
 # Quit
 Type "q"
