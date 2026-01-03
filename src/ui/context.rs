@@ -21,31 +21,40 @@ pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
     render_context_lines(frame, after, area, false);
 }
 
+/// Extract row number from a table cell block context
+fn table_row(block: &BlockContext) -> Option<usize> {
+    match block {
+        BlockContext::TableCell(row) => Some(*row),
+        _ => None,
+    }
+}
+
 /// Group tokens into logical lines based on block context and width
-fn group_into_lines<'a>(tokens: &'a [TimedToken], max_width: usize) -> Vec<Vec<&'a TimedToken>> {
+fn group_into_lines(tokens: &[TimedToken], max_width: usize) -> Vec<Vec<&TimedToken>> {
     let mut lines: Vec<Vec<&TimedToken>> = Vec::new();
     let mut current_line: Vec<&TimedToken> = Vec::new();
     let mut current_width = 0;
     let mut last_block: Option<&BlockContext> = None;
-    let mut in_table = false;
+    let mut last_table_row: Option<usize> = None;
 
     for token in tokens {
-        let is_table_cell = matches!(token.token.block, BlockContext::TableCell);
-        let was_in_table = in_table;
-        in_table = is_table_cell;
+        let current_table_row = table_row(&token.token.block);
+        let is_table_cell = current_table_row.is_some();
+        let was_in_table = last_table_row.is_some();
 
         // Detect block transitions
-        let block_changed = last_block.map_or(false, |b| {
-            // Within table cells, don't break on cell boundaries
-            if is_table_cell && matches!(b, BlockContext::TableCell) {
-                false // Stay on same line, will add | separator
+        let block_changed = last_block.is_some_and(|b| {
+            // Within table cells in same row, don't break on cell boundaries
+            if is_table_cell && was_in_table {
+                // Different row = new line
+                current_table_row != last_table_row
             } else {
                 b != &token.token.block
             }
         });
 
         // Transition into or out of table starts new line
-        let table_transition = was_in_table != in_table;
+        let table_transition = was_in_table != is_table_cell;
 
         // Also wrap if line is too long
         let word_width = token.token.word.chars().count() + 1;
@@ -60,6 +69,7 @@ fn group_into_lines<'a>(tokens: &'a [TimedToken], max_width: usize) -> Vec<Vec<&
         current_line.push(token);
         current_width += word_width;
         last_block = Some(&token.token.block);
+        last_table_row = current_table_row;
     }
 
     if !current_line.is_empty() {
@@ -77,7 +87,7 @@ fn block_prefix(block: &BlockContext) -> &'static str {
         BlockContext::Heading(_) => "",
         BlockContext::Callout(_) => "[i] ",
         BlockContext::Paragraph => "",
-        BlockContext::TableCell => "",
+        BlockContext::TableCell(_) => "| ",
     }
 }
 
@@ -142,25 +152,26 @@ fn render_context_lines(
         ];
 
         // Add words, with | separators between table cells
-        let mut prev_was_table_cell = false;
+        let mut prev_table_row: Option<usize> = None;
         for (j, token) in line_tokens.iter().enumerate() {
-            let is_table_cell = matches!(token.token.block, BlockContext::TableCell);
-            let is_new_cell = is_table_cell && token.token.timing_hint.structure_modifier > 0;
+            let current_row = table_row(&token.token.block);
+            let is_new_cell = current_row.is_some() && token.token.timing_hint.structure_modifier > 0;
 
-            // Add cell separator if transitioning between table cells
-            if is_new_cell && prev_was_table_cell && j > 0 {
+            // Add cell separator between cells in same row
+            if is_new_cell && prev_table_row.is_some() && j > 0 {
                 spans.push(Span::styled(" | ", style));
             }
 
             spans.push(Span::styled(format!("{} ", token.token.word), style));
-            prev_was_table_cell = is_table_cell;
+            prev_table_row = current_row;
         }
 
-        let y = if fade_up {
-            area.y + i as u16
-        } else {
-            area.y + i as u16
-        };
+        // Add trailing | for table rows
+        if prev_table_row.is_some() {
+            spans.push(Span::styled("|", style));
+        }
+
+        let y = area.y + i as u16;
 
         if y >= area.y + area.height {
             continue;

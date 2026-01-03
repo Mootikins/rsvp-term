@@ -15,7 +15,7 @@ pub enum BlockContext {
     Quote(usize),       // depth
     Callout(String),    // type
     Heading(u8),        // level 1-6
-    TableCell,          // table cell (cells separated by |, rows by newline)
+    TableCell(usize),   // table cell with row number (0-indexed)
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]

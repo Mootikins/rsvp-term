@@ -57,6 +57,8 @@ struct ParserContext {
     skip_depth: usize,
     /// Flag set when entering a new block (cleared after first token)
     new_block_entered: bool,
+    /// Current table row number (reset when exiting table)
+    table_row: usize,
 }
 
 impl ParserContext {
@@ -68,6 +70,7 @@ impl ParserContext {
             list_depth: 0,
             skip_depth: 0,
             new_block_entered: false,
+            table_row: 0,
         }
     }
 
@@ -241,11 +244,15 @@ fn enter_node(
     } else if node.is::<ListItem>() {
         ctx.push_block(BlockContext::ListItem(ctx.list_depth));
         restore_block = true;
-    } else if node.is::<Table>() || node.is::<TableRow>() {
-        // Tables and rows don't change block context, just pass through
+    } else if node.is::<Table>() {
+        // Reset row counter when entering a table
+        ctx.table_row = 0;
+    } else if node.is::<TableRow>() {
+        // Increment row counter for each row
+        ctx.table_row += 1;
     } else if node.is::<TableCell>() {
         // Each cell is a distinct block for timing and rendering
-        ctx.push_block(BlockContext::TableCell);
+        ctx.push_block(BlockContext::TableCell(ctx.table_row));
         restore_block = true;
     }
 
