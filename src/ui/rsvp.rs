@@ -8,13 +8,10 @@ use ratatui::{
 use crate::app::App;
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect) {
-    let token = match app.current_token() {
-        Some(t) => t,
-        None => {
-            let block = Block::default().borders(Borders::ALL);
-            frame.render_widget(block, area);
-            return;
-        }
+    let Some(token) = app.current_token() else {
+        let block = Block::default().borders(Borders::ALL);
+        frame.render_widget(block, area);
+        return;
     };
 
     let word = &token.token.word;

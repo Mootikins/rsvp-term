@@ -87,9 +87,8 @@ impl EpubParser {
             doc.set_current_chapter(i);
 
             // Get chapter content
-            let content = match doc.get_current_str() {
-                Some((content, _mime)) => content,
-                None => continue, // Skip empty chapters
+            let Some((content, _mime)) = doc.get_current_str() else {
+                continue; // Skip empty chapters
             };
 
             // Convert to markdown
@@ -136,9 +135,8 @@ impl DocumentParser for EpubParser {
             doc.set_current_chapter(i);
 
             // Get chapter content
-            let content = match doc.get_current_str() {
-                Some((content, _mime)) => content,
-                None => continue,
+            let Some((content, _mime)) = doc.get_current_str() else {
+                continue;
             };
 
             // Check for malformed XHTML - fail fast

@@ -34,8 +34,8 @@ pub enum ParseError {
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParseError::IoError(e) => write!(f, "IO error: {}", e),
-            ParseError::ParseError(s) => write!(f, "Parse error: {}", s),
+            Self::IoError(e) => write!(f, "IO error: {e}"),
+            Self::ParseError(s) => write!(f, "Parse error: {s}"),
         }
     }
 }
@@ -43,14 +43,14 @@ impl std::fmt::Display for ParseError {
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            ParseError::IoError(e) => Some(e),
-            ParseError::ParseError(_) => None,
+            Self::IoError(e) => Some(e),
+            Self::ParseError(_) => None,
         }
     }
 }
 
 impl From<std::io::Error> for ParseError {
     fn from(err: std::io::Error) -> Self {
-        ParseError::IoError(err)
+        Self::IoError(err)
     }
 }
