@@ -27,7 +27,7 @@ pub struct MarkdownParser {
 }
 
 impl MarkdownParser {
-    /// Create a new markdown parser with CommonMark and GFM table support.
+    /// Create a new markdown parser with `CommonMark` and GFM table support.
     #[must_use]
     pub fn new() -> Self {
         let mut md = MarkdownIt::new();
@@ -113,7 +113,7 @@ impl ParserContext {
         }
     }
 
-    fn should_skip(&self) -> bool {
+    const fn should_skip(&self) -> bool {
         self.skip_depth > 0
     }
 }
@@ -189,7 +189,7 @@ fn walk_ast(
 }
 
 /// Handle entering a node. Returns flags for what to restore on exit.
-/// Returns (restore_style, restore_block, restore_skip, restore_list_depth, restore_quote_depth)
+/// Returns (`restore_style`, `restore_block`, `restore_skip`, `restore_list_depth`, `restore_quote_depth`)
 fn enter_node(
     node: &Node,
     ctx: &mut ParserContext,

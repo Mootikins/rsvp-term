@@ -107,7 +107,7 @@ fn find_position_in_lines(lines: &[DocLine], pos: usize) -> (usize, usize) {
 }
 
 /// Extract row number from a table cell block context
-fn table_row(block: &BlockContext) -> Option<usize> {
+const fn table_row(block: &BlockContext) -> Option<usize> {
     match block {
         BlockContext::TableCell(row) => Some(*row),
         _ => None,
@@ -115,14 +115,12 @@ fn table_row(block: &BlockContext) -> Option<usize> {
 }
 
 /// Get block prefix for visual indication
-fn block_prefix(block: &BlockContext) -> &'static str {
+const fn block_prefix(block: &BlockContext) -> &'static str {
     match block {
         BlockContext::ListItem(_) => "* ",
-        BlockContext::Quote(_) => "| ",
-        BlockContext::Heading(_) => "",
+        BlockContext::Quote(_) | BlockContext::TableCell(_) => "| ",
+        BlockContext::Heading(_) | BlockContext::Paragraph => "",
         BlockContext::Callout(_) => "[i] ",
-        BlockContext::Paragraph => "",
-        BlockContext::TableCell(_) => "| ",
     }
 }
 
