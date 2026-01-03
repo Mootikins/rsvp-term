@@ -13,6 +13,7 @@ pub struct EpubParser {
 }
 
 impl EpubParser {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             md_parser: MarkdownParser::new(),

@@ -28,6 +28,7 @@ pub struct MarkdownParser {
 
 impl MarkdownParser {
     /// Create a new markdown parser with CommonMark and GFM table support.
+    #[must_use]
     pub fn new() -> Self {
         let mut md = MarkdownIt::new();
         cmark::add(&mut md);

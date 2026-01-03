@@ -7,6 +7,7 @@ use crate::types::{TimingHint, Token};
 /// - Base: 60,000ms / WPM (e.g., 300 WPM = 200ms per word)
 /// - Plus timing hint modifiers for word length, punctuation, structure
 /// - Minimum duration is 50ms to prevent too-fast display
+#[must_use]
 pub fn calculate_duration(token: &Token, wpm: u16) -> u64 {
     let base_ms = 60_000_u64 / u64::from(wpm);
     let modifiers = i64::from(token.timing_hint.word_length_modifier)
@@ -22,6 +23,7 @@ pub fn calculate_duration(token: &Token, wpm: u16) -> u64 {
 }
 
 /// Generate timing hints based on word characteristics.
+#[must_use]
 pub fn generate_timing_hint(word: &str, is_paragraph_end: bool, is_new_block: bool) -> TimingHint {
     let len = word.chars().count();
 

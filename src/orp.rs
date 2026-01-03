@@ -13,6 +13,7 @@
 ///
 /// Leading punctuation is skipped so the ORP falls on actual letters.
 /// Uses `.chars().count()` for correct Unicode handling.
+#[must_use]
 pub fn calculate_orp(word: &str) -> usize {
     // Find leading punctuation to skip
     let leading_punct: usize = word
