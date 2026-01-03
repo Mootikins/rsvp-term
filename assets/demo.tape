@@ -10,7 +10,7 @@ Set Theme "Catppuccin Mocha"
 Set TypingSpeed 50ms
 
 # Show the command
-Type "rsvp-term demo-sample.md"
+Type "rsvp-term assets/demo-sample.md"
 Sleep 500ms
 Enter
 Sleep 2s

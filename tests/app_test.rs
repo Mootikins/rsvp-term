@@ -57,7 +57,7 @@ fn test_app_wpm_bounds() {
     for _ in 0..100 {
         app.increase_wpm();
     }
-    assert_eq!(app.wpm(), 800);
+    assert_eq!(app.wpm(), 1000);
 
     // Test lower bound
     for _ in 0..100 {

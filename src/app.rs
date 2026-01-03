@@ -58,7 +58,7 @@ impl App {
     // Mutations
     pub fn toggle_pause(&mut self) { self.paused = !self.paused; }
 
-    pub fn increase_wpm(&mut self) { self.wpm = (self.wpm + 25).min(800); }
+    pub fn increase_wpm(&mut self) { self.wpm = (self.wpm + 25).min(1000); }
 
     pub fn decrease_wpm(&mut self) { self.wpm = self.wpm.saturating_sub(25).max(100); }
 
