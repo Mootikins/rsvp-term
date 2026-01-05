@@ -62,8 +62,9 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
     let tokens = app.tokens();
     let pos = app.position();
 
-    // Always start from 0 to ensure consistent line breaks (no reflow)
-    let start = 0;
+    // Look back enough tokens to fill context, but not from the beginning
+    // This prevents O(n) growth as position increases
+    let start = pos.saturating_sub(500);
     let end = (pos + 500).min(tokens.len());
 
     // Use configurable max chars to prevent reflow on wide terminals
