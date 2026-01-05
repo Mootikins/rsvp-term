@@ -1,4 +1,5 @@
 use crate::app::App;
+use crate::types::TokenStyle;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
@@ -17,6 +18,22 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
 
     let word = &token.token.word;
     let orp_pos = token.orp_position;
+
+    // Calculate base style from token style (if styling enabled)
+    let base_style = if app.styling_enabled {
+        match &token.token.style {
+            TokenStyle::Bold => Style::default().add_modifier(Modifier::BOLD),
+            TokenStyle::Italic => Style::default().add_modifier(Modifier::ITALIC),
+            TokenStyle::BoldItalic => Style::default()
+                .add_modifier(Modifier::BOLD)
+                .add_modifier(Modifier::ITALIC),
+            TokenStyle::Code => Style::default().bg(Color::Rgb(60, 60, 60)),
+            TokenStyle::Link(_) => Style::default().add_modifier(Modifier::UNDERLINED),
+            TokenStyle::Normal => Style::default(),
+        }
+    } else {
+        Style::default()
+    };
 
     // Calculate ORP center position
     let center = area.width as usize / 2;
@@ -40,12 +57,12 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     spans.push(Span::raw(" ".repeat(left_padding)));
 
     for (i, c) in chars.iter().enumerate() {
-        let style = if i == orp_pos {
-            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+        let char_style = if i == orp_pos {
+            base_style.fg(Color::Red).add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::White)
+            base_style.fg(Color::White)
         };
-        spans.push(Span::styled(c.to_string(), style));
+        spans.push(Span::styled(c.to_string(), char_style));
     }
 
     let word_para = Paragraph::new(Line::from(spans));
