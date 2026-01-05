@@ -54,6 +54,8 @@ pub struct TimingHint {
     pub word_length_modifier: i32,
     pub punctuation_modifier: i32,
     pub structure_modifier: i32,
+    /// True if this is the first word of a table cell (for rendering separators)
+    pub is_cell_start: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]

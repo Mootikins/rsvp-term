@@ -64,6 +64,7 @@ fn test_combined_modifiers() {
         word_length_modifier: 20,
         punctuation_modifier: 150,
         structure_modifier: 0,
+        is_cell_start: false,
     };
     let token = make_token("sentence,", hint);
     let duration = calculate_duration(&token, 300);
@@ -72,14 +73,14 @@ fn test_combined_modifiers() {
 
 #[test]
 fn test_hint_short_word() {
-    let hint = generate_timing_hint("the", false, false, false);
+    let hint = generate_timing_hint("the", false, false, false, false);
     assert_eq!(hint.word_length_modifier, 0);
 }
 
 #[test]
 fn test_hint_long_word() {
     // "beautiful" = 9 chars, 3 extra over 6 = 60ms
-    let hint = generate_timing_hint("beautiful", false, false, false);
+    let hint = generate_timing_hint("beautiful", false, false, false, false);
     assert_eq!(hint.word_length_modifier, 60);
 }
 
@@ -89,42 +90,42 @@ fn test_hint_very_long_word() {
     // > 6: (min(len,10) - 6) * 20 = (10-6)*20 = 80
     // > 10: (len - 10) * 40 = (13-10)*40 = 120
     // total = 80 + 120 = 200
-    let hint = generate_timing_hint("extraordinary", false, false, false);
+    let hint = generate_timing_hint("extraordinary", false, false, false, false);
     assert_eq!(hint.word_length_modifier, 200);
 }
 
 #[test]
 fn test_hint_comma() {
-    let hint = generate_timing_hint("word,", false, false, false);
+    let hint = generate_timing_hint("word,", false, false, false, false);
     assert_eq!(hint.punctuation_modifier, 150);
 }
 
 #[test]
 fn test_hint_period() {
-    let hint = generate_timing_hint("end.", false, false, false);
+    let hint = generate_timing_hint("end.", false, false, false, false);
     assert_eq!(hint.punctuation_modifier, 200);
 }
 
 #[test]
 fn test_hint_question() {
-    let hint = generate_timing_hint("why?", false, false, false);
+    let hint = generate_timing_hint("why?", false, false, false, false);
     assert_eq!(hint.punctuation_modifier, 200);
 }
 
 #[test]
 fn test_hint_paragraph_break() {
-    let hint = generate_timing_hint("word", true, false, false);
+    let hint = generate_timing_hint("word", true, false, false, false);
     assert_eq!(hint.structure_modifier, 300);
 }
 
 #[test]
 fn test_hint_new_block() {
-    let hint = generate_timing_hint("word", false, true, false);
+    let hint = generate_timing_hint("word", false, true, false, false);
     assert_eq!(hint.structure_modifier, 150);
 }
 
 #[test]
 fn test_hint_last_table_cell() {
-    let hint = generate_timing_hint("word", false, false, true);
+    let hint = generate_timing_hint("word", false, false, true, false);
     assert_eq!(hint.structure_modifier, 300); // Last table cell gets 300ms
 }

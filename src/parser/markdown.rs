@@ -66,6 +66,8 @@ struct ParserContext {
     table_cell_count: usize,
     /// Whether the current cell is the last in the row (for timing)
     is_last_table_cell: bool,
+    /// Flag set when entering a new table cell (cleared after first token)
+    is_cell_start: bool,
     /// Whether the current blockquote is a callout
     in_callout: bool,
     /// Whether we're inside inline code (preserves whitespace)
@@ -87,6 +89,7 @@ impl ParserContext {
             table_cell_index: 0,
             table_cell_count: 0,
             is_last_table_cell: false,
+            is_cell_start: false,
             in_callout: false,
             in_inline_code: false,
             parent_stack: Vec::new(),
@@ -402,6 +405,8 @@ fn enter_node(
     } else if node.is::<TableCell>() {
         // Check if this is the last cell in the row
         ctx.is_last_table_cell = ctx.table_cell_index == ctx.table_cell_count - 1;
+        // Mark this as start of a new cell (for rendering separators)
+        ctx.is_cell_start = true;
 
         // Each cell is a distinct block for timing and rendering
         ctx.push_block(BlockContext::TableCell(ctx.table_row));
@@ -453,6 +458,7 @@ fn enter_node(
                     is_paragraph_end,
                     is_new_block,
                     ctx.is_last_table_cell,
+                    ctx.is_cell_start,
                 );
 
                 tokens.push(Token {
@@ -463,8 +469,9 @@ fn enter_node(
                     timing_hint,
                 });
 
-                // Clear flag after first token in new block
+                // Clear flags after first token in new block/cell
                 ctx.new_block_entered = false;
+                ctx.is_cell_start = false;
             }
         }
     }

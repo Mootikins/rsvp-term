@@ -171,7 +171,7 @@ fn calculate_line_width(line: &DocLine) -> usize {
 
     for (j, (_, token)) in line.tokens.iter().enumerate() {
         let current_row = table_row(&token.token.block);
-        let is_new_cell = current_row.is_some() && token.token.timing_hint.structure_modifier > 0;
+        let is_new_cell = current_row.is_some() && token.token.timing_hint.is_cell_start;
 
         // Cell separator
         if is_new_cell && prev_table_row.is_some() && j > 0 {
@@ -364,7 +364,7 @@ fn render_line(
     let mut prev_table_row: Option<usize> = None;
     for (j, (global_idx, token)) in line.tokens.iter().enumerate() {
         let current_row = table_row(&token.token.block);
-        let is_new_cell = current_row.is_some() && token.token.timing_hint.structure_modifier > 0;
+        let is_new_cell = current_row.is_some() && token.token.timing_hint.is_cell_start;
 
         // Add cell separator between cells in same row
         if is_new_cell && prev_table_row.is_some() && j > 0 {
