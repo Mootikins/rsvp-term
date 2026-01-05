@@ -12,5 +12,5 @@ fn test_version_flag() {
     // Should exit successfully and print version
     assert!(output.status.success(), "rsvp-term --version should exit successfully");
     assert!(stdout.contains("rsvp-term"), "Version output should contain 'rsvp-term'");
-    assert!(stdout.contains("0.3.0"), "Version output should contain version number");
+    assert!(stdout.contains("0.4.0"), "Version output should contain version number");
 }
