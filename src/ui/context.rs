@@ -8,8 +8,11 @@ use ratatui::{
     Frame,
 };
 
-/// Left padding for context lines
-const LEFT_PADDING: usize = 4;
+/// Minimum left padding for context lines
+const MIN_PADDING: usize = 2;
+
+/// Threshold for centering: if content uses less than this fraction of width, center it
+const CENTER_THRESHOLD: f32 = 0.6;
 
 /// Render context above the RSVP word
 pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
@@ -51,7 +54,7 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
     let end = (pos + 500).min(tokens.len());
 
     // Use configurable max chars to prevent reflow on wide terminals
-    let max_chars = width.saturating_sub(LEFT_PADDING + 4).min(max_line_chars);
+    let max_chars = width.saturating_sub(MIN_PADDING + 4).min(max_line_chars);
 
     let mut lines: Vec<DocLine> = Vec::new();
     let mut current_line: Vec<(usize, &TimedToken)> = Vec::new();
@@ -128,6 +131,53 @@ const fn table_row(block: &BlockContext) -> Option<usize> {
         BlockContext::TableCell(row) => Some(*row),
         _ => None,
     }
+}
+
+/// Calculate the display width of a line's content (including prefix and separators)
+fn calculate_line_width(line: &DocLine) -> usize {
+    if line.is_blank || line.tokens.is_empty() {
+        return 0;
+    }
+
+    let first_token = &line.tokens[0].1;
+    let prefix_width = block_prefix(&first_token.token.block).chars().count();
+
+    let mut width = prefix_width;
+    let mut prev_table_row: Option<usize> = None;
+
+    for (j, (_, token)) in line.tokens.iter().enumerate() {
+        let current_row = table_row(&token.token.block);
+        let is_new_cell = current_row.is_some() && token.token.timing_hint.structure_modifier > 0;
+
+        // Cell separator
+        if is_new_cell && prev_table_row.is_some() && j > 0 {
+            width += 3; // " | "
+        }
+
+        width += token.token.word.chars().count() + 1; // word + space
+        prev_table_row = current_row;
+    }
+
+    // Trailing | for table rows
+    if prev_table_row.is_some() {
+        width += 1;
+    }
+
+    width
+}
+
+/// Calculate left padding for a line - centers short lines, left-aligns long ones
+fn calculate_padding(content_width: usize, available_width: usize) -> usize {
+    let ratio = content_width as f32 / available_width as f32;
+
+    if ratio < CENTER_THRESHOLD {
+        // Center the content
+        (available_width.saturating_sub(content_width)) / 2
+    } else {
+        // Left-align with minimum padding
+        MIN_PADDING
+    }
+    .max(MIN_PADDING)
 }
 
 /// Get block prefix for visual indication
@@ -249,7 +299,10 @@ fn render_line(
     let first_token = &line.tokens[0].1;
     let prefix = block_prefix(&first_token.token.block);
 
-    let padding = " ".repeat(LEFT_PADDING);
+    // Calculate padding for centering short lines
+    let content_width = calculate_line_width(line);
+    let padding_size = calculate_padding(content_width, width as usize);
+    let padding = " ".repeat(padding_size);
     let mut spans = vec![Span::raw(padding), Span::styled(prefix, style)];
 
     // Add words - visible or blank depending on position
@@ -311,4 +364,57 @@ fn render_line(
 enum ContextType {
     Before,
     After,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_padding_short_line_centered() {
+        // Short content (20 chars) in wide terminal (80 chars) = 25% < 60% threshold
+        let padding = calculate_padding(20, 80);
+        // Should center: (80 - 20) / 2 = 30
+        assert_eq!(padding, 30);
+    }
+
+    #[test]
+    fn test_calculate_padding_long_line_left_aligned() {
+        // Long content (60 chars) in 80 char terminal = 75% > 60% threshold
+        let padding = calculate_padding(60, 80);
+        // Should use minimum padding
+        assert_eq!(padding, MIN_PADDING);
+    }
+
+    #[test]
+    fn test_calculate_padding_at_threshold() {
+        // Exactly at threshold: 48 chars in 80 = 60%
+        let padding = calculate_padding(48, 80);
+        // At threshold, should be left-aligned
+        assert_eq!(padding, MIN_PADDING);
+    }
+
+    #[test]
+    fn test_calculate_padding_just_under_threshold() {
+        // Just under threshold: 47 chars in 80 = 58.75% < 60%
+        let padding = calculate_padding(47, 80);
+        // Should center: (80 - 47) / 2 = 16
+        assert_eq!(padding, 16);
+    }
+
+    #[test]
+    fn test_calculate_padding_minimum_enforced() {
+        // Very wide content that would give tiny padding
+        let padding = calculate_padding(79, 80);
+        // Should enforce minimum
+        assert_eq!(padding, MIN_PADDING);
+    }
+
+    #[test]
+    fn test_calculate_padding_empty_content() {
+        // Edge case: no content
+        let padding = calculate_padding(0, 80);
+        // Should center at 40, but min enforced
+        assert_eq!(padding, 40);
+    }
 }

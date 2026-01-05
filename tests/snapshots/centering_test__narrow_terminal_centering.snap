@@ -1,0 +1,26 @@
+---
+source: tests/centering_test.rs
+expression: results
+---
+[
+    (
+        10,
+        40,
+        15,
+    ),
+    (
+        20,
+        40,
+        10,
+    ),
+    (
+        25,
+        40,
+        2,
+    ),
+    (
+        30,
+        40,
+        2,
+    ),
+]

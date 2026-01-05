@@ -1,0 +1,36 @@
+---
+source: tests/centering_test.rs
+expression: results
+---
+[
+    (
+        "Short heading in wide terminal",
+        10,
+        80,
+        35,
+    ),
+    (
+        "Medium heading in wide terminal",
+        20,
+        80,
+        30,
+    ),
+    (
+        "Long line exceeds threshold",
+        50,
+        80,
+        2,
+    ),
+    (
+        "Just under threshold",
+        47,
+        80,
+        16,
+    ),
+    (
+        "Exactly at threshold",
+        48,
+        80,
+        2,
+    ),
+]

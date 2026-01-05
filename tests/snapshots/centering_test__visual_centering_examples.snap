@@ -1,0 +1,31 @@
+---
+source: tests/centering_test.rs
+expression: visuals
+---
+[
+    (
+        "# Title",
+        80,
+        "|                                    # Title|",
+    ),
+    (
+        "## Subtitle",
+        80,
+        "|                                  ## Subtitle|",
+    ),
+    (
+        "The quick brown fox jumps over the lazy dog.",
+        80,
+        "|                  The quick brown fox jumps over the lazy dog.|",
+    ),
+    (
+        "Short.",
+        60,
+        "|                           Short.|",
+    ),
+    (
+        "A very long paragraph that definitely exceeds the centering threshold and should be left-aligned.",
+        80,
+        "|  A very long paragraph that definitely exceeds the centering threshold and should be left-aligned.|",
+    ),
+]
