@@ -5,20 +5,25 @@ use crate::types::{TimingHint, Token};
 ///
 /// The duration is calculated as:
 /// - Base: 60,000ms / WPM (e.g., 300 WPM = 200ms per word)
-/// - Plus timing hint modifiers for word length, punctuation, structure
+/// - Plus timing hint modifiers scaled by WPM (modifiers are calibrated for 300 WPM)
 /// - Minimum duration is 50ms to prevent too-fast display
 #[must_use]
 pub fn calculate_duration(token: &Token, wpm: u16) -> u64 {
     let base_ms = 60_000_u64 / u64::from(wpm);
-    let modifiers = i64::from(token.timing_hint.word_length_modifier)
-        + i64::from(token.timing_hint.punctuation_modifier)
-        + i64::from(token.timing_hint.structure_modifier);
 
-    // Safe: base_ms is at most 60000, modifiers are small i32s summing to < 1000
+    // Scale modifiers by WPM ratio (modifiers were designed for 300 WPM)
+    // At 600 WPM, modifiers should be halved; at 150 WPM, doubled
+    let scale = 300.0 / f64::from(wpm);
+    let modifiers = (f64::from(token.timing_hint.word_length_modifier)
+        + f64::from(token.timing_hint.punctuation_modifier)
+        + f64::from(token.timing_hint.structure_modifier))
+        * scale;
+
+    // Safe: base_ms is at most 60000, scaled modifiers are bounded
     // Result after max(50) is always positive and fits in u64
     #[allow(clippy::cast_sign_loss)]
     {
-        (i64::try_from(base_ms).unwrap_or(i64::MAX) + modifiers).max(50) as u64
+        ((base_ms as f64 + modifiers).round().max(50.0)) as u64
     }
 }
 
