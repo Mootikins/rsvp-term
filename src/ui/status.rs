@@ -35,7 +35,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let gauge = Gauge::default()
         .ratio(app.progress())
         .label(label)
-        .gauge_style(Style::default().fg(Color::Green).bg(Color::DarkGray));
+        .gauge_style(Style::default().fg(Color::Rgb(80, 120, 80)).bg(Color::Rgb(40, 40, 40)));
 
     frame.render_widget(gauge, chunks[1]);
 }

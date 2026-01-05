@@ -48,7 +48,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     // Render top guide bar
     if center_y > 0 {
         let top_y = area.y + center_y - 1;
-        let top_spans = build_faded_guide_line(area.width as usize, tick_pos, '┬', &hint);
+        let top_spans = build_faded_guide_line(area.width as usize, tick_pos, '─', &hint);
         let top_para = Paragraph::new(Line::from(top_spans));
         frame.render_widget(
             top_para,
@@ -86,7 +86,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     // Render bottom guide bar
     if center_y + 1 < area.height {
         let bottom_y = area.y + center_y + 1;
-        let bottom_spans = build_faded_guide_line(area.width as usize, tick_pos, '┴', &hint);
+        let bottom_spans = build_faded_guide_line(area.width as usize, tick_pos, '─', &hint);
         let bottom_para = Paragraph::new(Line::from(bottom_spans));
         frame.render_widget(
             bottom_para,
