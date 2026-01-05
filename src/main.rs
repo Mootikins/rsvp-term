@@ -32,6 +32,7 @@ impl Drop for TerminalGuard {
 #[derive(ClapParser)]
 #[command(name = "rsvp-term")]
 #[command(about = "TUI for RSVP reading of markdown and EPUB files")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 struct Cli {
     /// File to read (markdown or EPUB)
     file: std::path::PathBuf,
