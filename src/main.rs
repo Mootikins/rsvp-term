@@ -44,6 +44,14 @@ struct Cli {
     /// Maximum width of context lines in characters (prevents reflow on wide terminals)
     #[arg(long, default_value_t = rsvp_term::app::DEFAULT_CONTEXT_WIDTH)]
     context_width: usize,
+
+    /// Disable hint character gutter
+    #[arg(long)]
+    no_hint_chars: bool,
+
+    /// Disable bold/italic/code styling
+    #[arg(long)]
+    no_styling: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -95,7 +103,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect();
 
     // Initialize app
-    let mut app = App::with_context_width(timed_tokens, doc.sections, cli.context_width);
+    let mut app = App::with_options(
+        timed_tokens,
+        doc.sections,
+        cli.context_width,
+        !cli.no_hint_chars,
+        !cli.no_styling,
+    );
 
     // Setup terminal
     enable_raw_mode()?;

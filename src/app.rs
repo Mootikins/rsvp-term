@@ -16,6 +16,8 @@ pub struct App {
     outline_selection: usize,
     show_help: bool,
     context_width: usize,
+    pub hint_chars_enabled: bool,
+    pub styling_enabled: bool,
 }
 
 /// Default context width in characters
@@ -23,13 +25,23 @@ pub const DEFAULT_CONTEXT_WIDTH: usize = 100;
 
 impl App {
     pub fn new(tokens: Vec<TimedToken>, sections: Vec<Section>) -> Self {
-        Self::with_context_width(tokens, sections, DEFAULT_CONTEXT_WIDTH)
+        Self::with_options(tokens, sections, DEFAULT_CONTEXT_WIDTH, true, true)
     }
 
     pub fn with_context_width(
         tokens: Vec<TimedToken>,
         sections: Vec<Section>,
         context_width: usize,
+    ) -> Self {
+        Self::with_options(tokens, sections, context_width, true, true)
+    }
+
+    pub fn with_options(
+        tokens: Vec<TimedToken>,
+        sections: Vec<Section>,
+        context_width: usize,
+        hint_chars_enabled: bool,
+        styling_enabled: bool,
     ) -> Self {
         Self {
             tokens,
@@ -41,6 +53,8 @@ impl App {
             outline_selection: 0,
             show_help: false,
             context_width,
+            hint_chars_enabled,
+            styling_enabled,
         }
     }
 
