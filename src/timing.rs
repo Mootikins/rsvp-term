@@ -30,6 +30,7 @@ pub fn generate_timing_hint(
     is_new_block: bool,
     is_last_table_cell: bool,
     is_cell_start: bool,
+    table_column: Option<usize>,
 ) -> TimingHint {
     let len = word.chars().count();
 
@@ -67,5 +68,6 @@ pub fn generate_timing_hint(
         punctuation_modifier,
         structure_modifier,
         is_cell_start,
+        table_column,
     }
 }

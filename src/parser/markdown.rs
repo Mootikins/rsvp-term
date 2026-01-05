@@ -68,6 +68,8 @@ struct ParserContext {
     is_last_table_cell: bool,
     /// Flag set when entering a new table cell (cleared after first token)
     is_cell_start: bool,
+    /// Current table column index (0-indexed), None if not in a table cell
+    current_table_column: Option<usize>,
     /// Whether the current blockquote is a callout
     in_callout: bool,
     /// Whether we're inside inline code (preserves whitespace)
@@ -90,6 +92,7 @@ impl ParserContext {
             table_cell_count: 0,
             is_last_table_cell: false,
             is_cell_start: false,
+            current_table_column: None,
             in_callout: false,
             in_inline_code: false,
             parent_stack: Vec::new(),
@@ -396,6 +399,7 @@ fn enter_node(
         ctx.table_cell_index = 0;
         ctx.table_cell_count = 0;
         ctx.is_last_table_cell = false;
+        ctx.current_table_column = None;
     } else if node.is::<TableRow>() {
         // Increment row counter for each row
         ctx.table_row += 1;
@@ -403,6 +407,8 @@ fn enter_node(
         ctx.table_cell_index = 0;
         ctx.table_cell_count = node.children.iter().filter(|c| c.is::<TableCell>()).count();
     } else if node.is::<TableCell>() {
+        // Store current column index before incrementing
+        ctx.current_table_column = Some(ctx.table_cell_index);
         // Check if this is the last cell in the row
         ctx.is_last_table_cell = ctx.table_cell_index == ctx.table_cell_count - 1;
         // Mark this as start of a new cell (for rendering separators)
@@ -459,6 +465,7 @@ fn enter_node(
                     is_new_block,
                     ctx.is_last_table_cell,
                     ctx.is_cell_start,
+                    ctx.current_table_column,
                 );
 
                 tokens.push(Token {

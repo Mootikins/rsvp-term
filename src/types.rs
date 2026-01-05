@@ -56,6 +56,8 @@ pub struct TimingHint {
     pub structure_modifier: i32,
     /// True if this is the first word of a table cell (for rendering separators)
     pub is_cell_start: bool,
+    /// Column index for table cells (0-indexed), None if not in a table
+    pub table_column: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq)]

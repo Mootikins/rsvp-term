@@ -15,6 +15,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 150,
             is_cell_start: false,
+            table_column: None,
         },
     },
     Token {
@@ -29,6 +30,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,
+            table_column: None,
         },
     },
     Token {
@@ -43,6 +45,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,
+            table_column: None,
         },
     },
     Token {
@@ -57,6 +60,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,
+            table_column: None,
         },
     },
     Token {
@@ -71,6 +75,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,
+            table_column: None,
         },
     },
     Token {
@@ -85,6 +90,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,
+            table_column: None,
         },
     },
     Token {
@@ -99,6 +105,7 @@ expression: result.tokens
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,
+            table_column: None,
         },
     },
 ]

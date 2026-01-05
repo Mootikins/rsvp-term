@@ -59,6 +59,7 @@ pub fn render_after(frame: &mut Frame, app: &App, area: Rect, gutter_area: Optio
 }
 
 /// A line with its tokens and their global indices
+#[derive(Clone)]
 struct DocLine<'a> {
     tokens: Vec<(usize, &'a TimedToken)>, // (global_index, token)
     is_blank: bool,                       // True for separator lines between blocks
@@ -157,6 +158,48 @@ const fn table_row(block: &BlockContext) -> Option<usize> {
     }
 }
 
+/// Compute column widths for table cells in a set of lines
+/// Returns a map from (row, column) to max width needed for that column
+fn compute_table_column_widths(lines: &[DocLine]) -> std::collections::HashMap<usize, usize> {
+    let mut column_widths: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
+
+    for line in lines {
+        if line.is_blank || line.tokens.is_empty() {
+            continue;
+        }
+
+        // Track cell content by column
+        let mut current_col: Option<usize> = None;
+        let mut cell_width = 0usize;
+
+        for (_, token) in &line.tokens {
+            if let Some(col) = token.token.timing_hint.table_column {
+                // Starting a new cell
+                if token.token.timing_hint.is_cell_start {
+                    // Save previous cell's width
+                    if let Some(prev_col) = current_col {
+                        let entry = column_widths.entry(prev_col).or_insert(0);
+                        *entry = (*entry).max(cell_width);
+                    }
+                    current_col = Some(col);
+                    cell_width = token.token.word.chars().count();
+                } else {
+                    // Continue current cell
+                    cell_width += 1 + token.token.word.chars().count(); // space + word
+                }
+            }
+        }
+
+        // Don't forget the last cell
+        if let Some(col) = current_col {
+            let entry = column_widths.entry(col).or_insert(0);
+            *entry = (*entry).max(cell_width);
+        }
+    }
+
+    column_widths
+}
+
 /// Calculate the display width of a line's content (including prefix and separators)
 fn calculate_line_width(line: &DocLine) -> usize {
     if line.is_blank || line.tokens.is_empty() {
@@ -190,18 +233,21 @@ fn calculate_line_width(line: &DocLine) -> usize {
     width
 }
 
-/// Calculate left padding for a line - centers short lines, left-aligns long ones
-fn calculate_padding(content_width: usize, available_width: usize) -> usize {
-    let ratio = content_width as f32 / available_width as f32;
+/// Calculate left padding for a line - centers headings only, left-aligns others
+fn calculate_padding(content_width: usize, available_width: usize, block: &BlockContext) -> usize {
+    // Only center headings
+    let should_center = matches!(block, BlockContext::Heading(_));
 
-    if ratio < CENTER_THRESHOLD {
-        // Center the content
-        (available_width.saturating_sub(content_width)) / 2
-    } else {
-        // Left-align with minimum padding
-        MIN_PADDING
+    if should_center {
+        let ratio = content_width as f32 / available_width as f32;
+        if ratio < CENTER_THRESHOLD {
+            // Center the content
+            return (available_width.saturating_sub(content_width)) / 2;
+        }
     }
-    .max(MIN_PADDING)
+
+    // Left-align with minimum padding
+    MIN_PADDING
 }
 
 /// Get block prefix for visual indication
@@ -234,6 +280,10 @@ fn render_lines_before(
     let start_line = end_line.saturating_sub(num_lines);
     let lines_to_show: Vec<_> = lines[start_line..end_line].iter().collect();
 
+    // Compute table column widths for visible lines
+    let lines_vec: Vec<_> = lines_to_show.iter().map(|l| (*l).clone()).collect();
+    let column_widths = compute_table_column_widths(&lines_vec);
+
     // Render from top to bottom, with fading (farther = dimmer)
     for (i, line) in lines_to_show.iter().enumerate() {
         let distance_from_bottom = lines_to_show.len() - 1 - i;
@@ -254,6 +304,7 @@ fn render_lines_before(
             ContextType::Before,
             styling_enabled,
             gutter_area,
+            &column_widths,
         );
     }
 }
@@ -276,6 +327,9 @@ fn render_lines_after(
     let end_line = (current_line_idx + num_lines).min(lines.len());
     let lines_to_show = &lines[current_line_idx..end_line];
 
+    // Compute table column widths for visible lines
+    let column_widths = compute_table_column_widths(lines_to_show);
+
     // Render lines, with fading (farther = dimmer)
     for (i, line) in lines_to_show.iter().enumerate() {
         let y = area.y + i as u16;
@@ -294,6 +348,7 @@ fn render_lines_after(
             ContextType::After,
             styling_enabled,
             gutter_area,
+            &column_widths,
         );
     }
 }
@@ -319,6 +374,7 @@ fn render_line(
     context_type: ContextType,
     styling_enabled: bool,
     gutter_area: Option<Rect>,
+    column_widths: &std::collections::HashMap<usize, usize>,
 ) {
     // Blank separator lines - just skip (renders as empty space)
     if line.is_blank || line.tokens.is_empty() {
@@ -354,17 +410,33 @@ fn render_line(
         }
     }
 
-    // Calculate padding for centering short lines
+    // Calculate padding - only center headings, left-align others
     let content_width = calculate_line_width(line);
-    let padding_size = calculate_padding(content_width, width as usize);
+    let padding_size = calculate_padding(content_width, width as usize, &first_token.token.block);
     let padding = " ".repeat(padding_size);
     let mut spans = vec![Span::raw(padding), Span::styled(prefix, style)];
 
     // Add words - visible or blank depending on position
     let mut prev_table_row: Option<usize> = None;
+    let mut current_col: Option<usize> = None;
+    let mut cell_content_width = 0usize;
+
     for (j, (global_idx, token)) in line.tokens.iter().enumerate() {
         let current_row = table_row(&token.token.block);
         let is_new_cell = current_row.is_some() && token.token.timing_hint.is_cell_start;
+
+        // When starting a new cell, add padding for the previous cell
+        if is_new_cell {
+            if let Some(col) = current_col {
+                let target_width = column_widths.get(&col).copied().unwrap_or(0);
+                if cell_content_width < target_width {
+                    let pad = " ".repeat(target_width - cell_content_width);
+                    spans.push(Span::styled(pad, style));
+                }
+            }
+            cell_content_width = 0;
+            current_col = token.token.timing_hint.table_column;
+        }
 
         // Add cell separator between cells in same row
         if is_new_cell && prev_table_row.is_some() && j > 0 {
@@ -391,11 +463,17 @@ fn render_line(
             }
         };
 
+        let word_len = token.token.word.chars().count();
         let word_text = format!("{} ", token.token.word);
         let display_text = match mode {
             WordMode::Visible => word_text,
-            WordMode::Blank => " ".repeat(token.token.word.chars().count() + 1),
+            WordMode::Blank => " ".repeat(word_len + 1),
         };
+
+        // Track cell content width
+        if current_col.is_some() {
+            cell_content_width += word_len + 1; // word + space
+        }
 
         let mut word_style = style; // Base gray style
         if styling_enabled {
@@ -409,6 +487,15 @@ fn render_line(
 
         spans.push(Span::styled(display_text, word_style));
         prev_table_row = current_row;
+    }
+
+    // Add padding for the last cell
+    if let Some(col) = current_col {
+        let target_width = column_widths.get(&col).copied().unwrap_or(0);
+        if cell_content_width < target_width {
+            let pad = " ".repeat(target_width - cell_content_width);
+            spans.push(Span::styled(pad, style));
+        }
     }
 
     // Add trailing | for table rows
@@ -454,50 +541,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_padding_short_line_centered() {
-        // Short content (20 chars) in wide terminal (80 chars) = 25% < 60% threshold
-        let padding = calculate_padding(20, 80);
+    fn test_heading_short_line_centered() {
+        // Headings should be centered
+        let padding = calculate_padding(20, 80, &BlockContext::Heading(1));
         // Should center: (80 - 20) / 2 = 30
         assert_eq!(padding, 30);
     }
 
     #[test]
-    fn test_calculate_padding_long_line_left_aligned() {
-        // Long content (60 chars) in 80 char terminal = 75% > 60% threshold
-        let padding = calculate_padding(60, 80);
-        // Should use minimum padding
+    fn test_heading_long_line_left_aligned() {
+        // Long heading still gets left-aligned (above threshold)
+        let padding = calculate_padding(60, 80, &BlockContext::Heading(1));
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
-    fn test_calculate_padding_at_threshold() {
-        // Exactly at threshold: 48 chars in 80 = 60%
-        let padding = calculate_padding(48, 80);
-        // At threshold, should be left-aligned
+    fn test_paragraph_always_left_aligned() {
+        // Paragraphs should always be left-aligned, even short ones
+        let padding = calculate_padding(20, 80, &BlockContext::Paragraph);
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
-    fn test_calculate_padding_just_under_threshold() {
-        // Just under threshold: 47 chars in 80 = 58.75% < 60%
-        let padding = calculate_padding(47, 80);
-        // Should center: (80 - 47) / 2 = 16
-        assert_eq!(padding, 16);
-    }
-
-    #[test]
-    fn test_calculate_padding_minimum_enforced() {
-        // Very wide content that would give tiny padding
-        let padding = calculate_padding(79, 80);
-        // Should enforce minimum
+    fn test_list_item_left_aligned() {
+        // List items should be left-aligned
+        let padding = calculate_padding(20, 80, &BlockContext::ListItem(1));
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
-    fn test_calculate_padding_empty_content() {
-        // Edge case: no content
-        let padding = calculate_padding(0, 80);
-        // Should center at 40, but min enforced
+    fn test_table_cell_left_aligned() {
+        // Table cells should be left-aligned
+        let padding = calculate_padding(20, 80, &BlockContext::TableCell(0));
+        assert_eq!(padding, MIN_PADDING);
+    }
+
+    #[test]
+    fn test_heading_empty_content() {
+        // Edge case: empty heading
+        let padding = calculate_padding(0, 80, &BlockContext::Heading(2));
+        // Should center at 40
         assert_eq!(padding, 40);
     }
 }
