@@ -1,8 +1,8 @@
 use crate::app::App;
-use crate::types::{BlockContext, TimedToken};
+use crate::types::{BlockContext, TimedToken, TokenStyle};
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::Paragraph,
     Frame,
@@ -23,7 +23,7 @@ pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
     let (line_idx, _) = find_position_in_lines(&lines, current_pos);
 
     // Render lines up to and including current line (words before current_pos shown, rest blanked)
-    render_lines_before(frame, &lines, line_idx, current_pos, area);
+    render_lines_before(frame, &lines, line_idx, current_pos, area, app.styling_enabled);
 }
 
 /// Render context below the RSVP word
@@ -35,7 +35,7 @@ pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
     let (line_idx, _) = find_position_in_lines(&lines, current_pos);
 
     // Render lines from current line onward (words after current_pos shown, rest blanked)
-    render_lines_after(frame, &lines, line_idx, current_pos, area);
+    render_lines_after(frame, &lines, line_idx, current_pos, area, app.styling_enabled);
 }
 
 /// A line with its tokens and their global indices
@@ -201,6 +201,7 @@ fn render_lines_before(
     current_line_idx: usize,
     current_pos: usize,
     area: Rect,
+    styling_enabled: bool,
 ) {
     if area.height == 0 {
         return;
@@ -229,6 +230,7 @@ fn render_lines_before(
             distance_from_bottom,
             current_pos,
             ContextType::Before,
+            styling_enabled,
         );
     }
 }
@@ -240,6 +242,7 @@ fn render_lines_after(
     current_line_idx: usize,
     current_pos: usize,
     area: Rect,
+    styling_enabled: bool,
 ) {
     if area.height == 0 || current_line_idx >= lines.len() {
         return;
@@ -264,6 +267,7 @@ fn render_lines_after(
             i,
             current_pos,
             ContextType::After,
+            styling_enabled,
         );
     }
 }
@@ -285,6 +289,7 @@ fn render_line(
     distance: usize,
     current_pos: usize,
     context_type: ContextType,
+    styling_enabled: bool,
 ) {
     // Blank separator lines - just skip (renders as empty space)
     if line.is_blank || line.tokens.is_empty() {
@@ -346,7 +351,17 @@ fn render_line(
             WordMode::Blank => " ".repeat(token.token.word.chars().count() + 1),
         };
 
-        spans.push(Span::styled(display_text, style));
+        let mut word_style = style; // Base gray style
+        if styling_enabled {
+            if matches!(&token.token.style, TokenStyle::Bold | TokenStyle::BoldItalic) {
+                word_style = word_style.add_modifier(Modifier::BOLD);
+            }
+            if matches!(&token.token.style, TokenStyle::Italic | TokenStyle::BoldItalic) {
+                word_style = word_style.add_modifier(Modifier::ITALIC);
+            }
+        }
+
+        spans.push(Span::styled(display_text, word_style));
         prev_table_row = current_row;
     }
 
