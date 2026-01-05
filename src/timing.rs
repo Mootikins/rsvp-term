@@ -39,31 +39,30 @@ pub fn generate_timing_hint(
 ) -> TimingHint {
     let len = word.chars().count();
 
-    // Word length modifier - safe conversion with bounded fallback
-    // Realistic words are < 50 chars, so values stay well under i32::MAX
+    // Word length modifier - gentle increase for longer words
+    // Old values were too aggressive (40ms/char over 10 made long words 2x slower)
     let word_length_modifier: i32 = if len > 10 {
-        let base = (10 - 6) * 20; // 80ms for chars 7-10
-        let extra = (len - 10) * 40; // 40ms per char over 10
-        i32::try_from(base + extra).unwrap_or(1000)
+        let base = (10 - 6) * 10; // 40ms for chars 7-10
+        let extra = (len - 10) * 15; // 15ms per char over 10 (was 40)
+        i32::try_from(base + extra).unwrap_or(500)
     } else if len > 6 {
-        i32::try_from((len - 6) * 20).unwrap_or(80)
+        i32::try_from((len - 6) * 10).unwrap_or(40) // 10ms per char (was 20)
     } else {
         0
     };
 
-    // Punctuation modifier (check last char)
+    // Punctuation modifier (check last char) - reduced from 200/150 to 100/75
     let punctuation_modifier = word.chars().last().map_or(0, |c| match c {
-        '.' | '!' | '?' => 200,
-        ',' | ':' | ';' => 150,
+        '.' | '!' | '?' => 100,
+        ',' | ':' | ';' => 75,
         _ => 0,
     });
 
-    // Structure modifier
-    // Priority: paragraph_end or last_table_cell (300ms) > new_block (150ms)
+    // Structure modifier - reduced from 300/150 to 150/75
     let structure_modifier = if is_paragraph_end || is_last_table_cell {
-        300
-    } else if is_new_block {
         150
+    } else if is_new_block {
+        75
     } else {
         0
     };

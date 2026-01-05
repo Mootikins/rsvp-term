@@ -13,7 +13,7 @@ expression: result.tokens
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
-            structure_modifier: 150,
+            structure_modifier: 75,
             is_cell_start: false,
             table_column: None,
         },
@@ -86,7 +86,7 @@ expression: result.tokens
             Quote,
         ),
         timing_hint: TimingHint {
-            word_length_modifier: 40,
+            word_length_modifier: 20,
             punctuation_modifier: 0,
             structure_modifier: 0,
             is_cell_start: false,

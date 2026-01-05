@@ -39,37 +39,37 @@ fn test_long_word_modifier() {
 #[test]
 fn test_punctuation_modifier() {
     let hint = TimingHint {
-        punctuation_modifier: 200, // period
+        punctuation_modifier: 100, // period (reduced from 200)
         ..Default::default()
     };
     let token = make_token("end.", hint);
     let duration = calculate_duration(&token, 300);
-    assert_eq!(duration, 400); // 200 + 200
+    assert_eq!(duration, 300); // 200 + 100
 }
 
 #[test]
 fn test_structure_modifier() {
     let hint = TimingHint {
-        structure_modifier: 300, // paragraph break
+        structure_modifier: 150, // paragraph break (reduced from 300)
         ..Default::default()
     };
     let token = make_token("paragraph", hint);
     let duration = calculate_duration(&token, 300);
-    assert_eq!(duration, 500); // 200 + 300
+    assert_eq!(duration, 350); // 200 + 150
 }
 
 #[test]
 fn test_combined_modifiers() {
     let hint = TimingHint {
         word_length_modifier: 20,
-        punctuation_modifier: 150,
+        punctuation_modifier: 75, // reduced from 150
         structure_modifier: 0,
         is_cell_start: false,
         table_column: None,
     };
     let token = make_token("sentence,", hint);
     let duration = calculate_duration(&token, 300);
-    assert_eq!(duration, 370); // 200 + 20 + 150
+    assert_eq!(duration, 295); // 200 + 20 + 75
 }
 
 #[test]
@@ -80,54 +80,54 @@ fn test_hint_short_word() {
 
 #[test]
 fn test_hint_long_word() {
-    // "beautiful" = 9 chars, 3 extra over 6 = 60ms
+    // "beautiful" = 9 chars, 3 extra over 6 = 30ms (10ms per char)
     let hint = generate_timing_hint("beautiful", false, false, false, false, None);
-    assert_eq!(hint.word_length_modifier, 60);
+    assert_eq!(hint.word_length_modifier, 30);
 }
 
 #[test]
 fn test_hint_very_long_word() {
     // "extraordinary" = 13 chars
-    // > 6: (min(len,10) - 6) * 20 = (10-6)*20 = 80
-    // > 10: (len - 10) * 40 = (13-10)*40 = 120
-    // total = 80 + 120 = 200
+    // > 6: (min(len,10) - 6) * 10 = (10-6)*10 = 40
+    // > 10: (len - 10) * 15 = (13-10)*15 = 45
+    // total = 40 + 45 = 85
     let hint = generate_timing_hint("extraordinary", false, false, false, false, None);
-    assert_eq!(hint.word_length_modifier, 200);
+    assert_eq!(hint.word_length_modifier, 85);
 }
 
 #[test]
 fn test_hint_comma() {
     let hint = generate_timing_hint("word,", false, false, false, false, None);
-    assert_eq!(hint.punctuation_modifier, 150);
+    assert_eq!(hint.punctuation_modifier, 75);
 }
 
 #[test]
 fn test_hint_period() {
     let hint = generate_timing_hint("end.", false, false, false, false, None);
-    assert_eq!(hint.punctuation_modifier, 200);
+    assert_eq!(hint.punctuation_modifier, 100);
 }
 
 #[test]
 fn test_hint_question() {
     let hint = generate_timing_hint("why?", false, false, false, false, None);
-    assert_eq!(hint.punctuation_modifier, 200);
+    assert_eq!(hint.punctuation_modifier, 100);
 }
 
 #[test]
 fn test_hint_paragraph_break() {
     let hint = generate_timing_hint("word", true, false, false, false, None);
-    assert_eq!(hint.structure_modifier, 300);
+    assert_eq!(hint.structure_modifier, 150);
 }
 
 #[test]
 fn test_hint_new_block() {
     let hint = generate_timing_hint("word", false, true, false, false, None);
-    assert_eq!(hint.structure_modifier, 150);
+    assert_eq!(hint.structure_modifier, 75);
 }
 
 #[test]
 fn test_hint_last_table_cell() {
     let hint = generate_timing_hint("word", false, false, true, false, Some(2));
-    assert_eq!(hint.structure_modifier, 300); // Last table cell gets 300ms
+    assert_eq!(hint.structure_modifier, 150); // Last table cell gets 150ms
     assert_eq!(hint.table_column, Some(2)); // Column index preserved
 }
