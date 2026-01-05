@@ -248,3 +248,18 @@ fn test_keybind_table_cell_boundaries() {
         "'down' should not be a cell start"
     );
 }
+
+#[test]
+fn test_star_bullet_list_parsed_same_as_dash() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("* First\n* Second\n* Third").unwrap();
+
+    // Words should NOT contain the * marker
+    let words: Vec<&str> = result.tokens.iter().map(|t| t.word.as_str()).collect();
+    assert!(
+        !words.iter().any(|w| w.contains('*')),
+        "Words should not contain *: {:?}",
+        words
+    );
+    assert_eq!(words, vec!["First", "Second", "Third"]);
+}
