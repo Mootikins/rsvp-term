@@ -227,9 +227,11 @@ fn calculate_line_width(line: &DocLine) -> usize {
 }
 
 /// Get block prefix for visual indication
-const fn block_prefix(block: &BlockContext) -> &'static str {
+fn block_prefix(block: &BlockContext) -> &'static str {
     match block {
-        BlockContext::ListItem(_) => "- ",
+        // Only show list marker for nested lists (depth > 1)
+        BlockContext::ListItem(depth) if *depth > 1 => "- ",
+        BlockContext::ListItem(_) => "",
         BlockContext::Quote(_) | BlockContext::TableCell(_) => "| ",
         BlockContext::Heading(_) | BlockContext::Paragraph => "",
         BlockContext::Callout(_) => "[i] ",

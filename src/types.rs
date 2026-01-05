@@ -61,7 +61,9 @@ impl BlockContext {
             BlockContext::Heading(5) => "#####",
             BlockContext::Heading(6) => "######",
             BlockContext::Heading(_) => "#",
-            BlockContext::ListItem(_) => "-",
+            // Only show list marker for nested lists (depth > 1)
+            BlockContext::ListItem(depth) if *depth > 1 => "-",
+            BlockContext::ListItem(_) => "",
             BlockContext::Quote(_) => ">",
             BlockContext::TableCell(_) => "|",
             BlockContext::Callout(_) => "[!]",
