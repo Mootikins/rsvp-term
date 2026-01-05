@@ -12,8 +12,6 @@ use ratatui::{
 /// Guide line color - slightly lighter than context text
 const GUIDE_COLOR: Color = Color::Rgb(120, 120, 120);
 
-/// RSVP box background color (subtle dark)
-const RSVP_BG: Color = Color::Rgb(25, 25, 30);
 
 /// Fade zone characters: dotted (2) + dashed (2) + solid fade (2)
 const FADE_DOTTED: usize = 2;
@@ -93,36 +91,15 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect
     let chars: Vec<char> = word.chars().collect();
     let mut spans = Vec::with_capacity(chars.len() + 1);
 
-    // Add background to word line if hint_chars enabled
-    let word_bg = if app.hint_chars_enabled {
-        Some(RSVP_BG)
-    } else {
-        None
-    };
-
-    // Padding with optional background
-    let pad_style = word_bg.map_or(Style::default(), |bg| Style::default().bg(bg));
-    spans.push(Span::styled(" ".repeat(left_padding), pad_style));
+    spans.push(Span::raw(" ".repeat(left_padding)));
 
     for (i, c) in chars.iter().enumerate() {
-        let mut char_style = if i == orp_pos {
+        let char_style = if i == orp_pos {
             base_style.fg(Color::Red).add_modifier(Modifier::BOLD)
         } else {
             base_style.fg(Color::White)
         };
-        if let Some(bg) = word_bg {
-            char_style = char_style.bg(bg);
-        }
         spans.push(Span::styled(c.to_string(), char_style));
-    }
-
-    // Fill remaining width with background
-    if let Some(bg) = word_bg {
-        let used_width = left_padding + chars.len();
-        let remaining = (area.width as usize).saturating_sub(used_width);
-        if remaining > 0 {
-            spans.push(Span::styled(" ".repeat(remaining), Style::default().bg(bg)));
-        }
     }
 
     let word_para = Paragraph::new(Line::from(spans));
@@ -256,9 +233,7 @@ fn build_faded_guide_line<'a>(width: usize, tick_pos: usize, tick_char: char) ->
 
         // Use tick char at tick position
         let display_char = if i == tick_pos { tick_char } else { c };
-        let style = Style::default()
-            .fg(Color::Rgb(brightness, brightness, brightness))
-            .bg(RSVP_BG);
+        let style = Style::default().fg(Color::Rgb(brightness, brightness, brightness));
         spans.push(Span::styled(display_char.to_string(), style));
     }
 

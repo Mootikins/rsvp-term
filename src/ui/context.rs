@@ -246,6 +246,7 @@ fn render_lines_before(
         render_line(
             frame,
             line,
+            area.x,
             y,
             area.width,
             distance_from_bottom,
@@ -285,6 +286,7 @@ fn render_lines_after(
         render_line(
             frame,
             line,
+            area.x,
             y,
             area.width,
             i,
@@ -303,12 +305,13 @@ enum WordMode {
     Blank,
 }
 
-/// Render a single line at the given y position
+/// Render a single line at the given position
 /// Words are shown or blanked based on their position relative to current_pos
 #[allow(clippy::too_many_arguments)]
 fn render_line(
     frame: &mut Frame,
     line: &DocLine,
+    x: u16,
     y: u16,
     width: u16,
     distance: usize,
@@ -414,7 +417,7 @@ fn render_line(
     }
 
     let line_area = Rect {
-        x: 0,
+        x,
         y,
         width,
         height: 1,
