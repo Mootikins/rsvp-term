@@ -12,8 +12,14 @@ use ratatui::{
 /// Guide line color - slightly lighter than context text
 const GUIDE_COLOR: Color = Color::Rgb(120, 120, 120);
 
-/// Number of characters for fade effect on guide lines
-const FADE_CHARS: usize = 6;
+/// RSVP box background color (subtle dark)
+const RSVP_BG: Color = Color::Rgb(25, 25, 30);
+
+/// Fade zone characters: dotted (2) + dashed (2) + solid fade (2)
+const FADE_DOTTED: usize = 2;
+const FADE_DASHED: usize = 2;
+const FADE_SOLID: usize = 2;
+const FADE_TOTAL: usize = FADE_DOTTED + FADE_DASHED + FADE_SOLID;
 
 /// Get hint characters for a block context
 fn current_block_hint(block: &BlockContext) -> &'static str {
@@ -87,15 +93,36 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect
     let chars: Vec<char> = word.chars().collect();
     let mut spans = Vec::with_capacity(chars.len() + 1);
 
-    spans.push(Span::raw(" ".repeat(left_padding)));
+    // Add background to word line if hint_chars enabled
+    let word_bg = if app.hint_chars_enabled {
+        Some(RSVP_BG)
+    } else {
+        None
+    };
+
+    // Padding with optional background
+    let pad_style = word_bg.map_or(Style::default(), |bg| Style::default().bg(bg));
+    spans.push(Span::styled(" ".repeat(left_padding), pad_style));
 
     for (i, c) in chars.iter().enumerate() {
-        let char_style = if i == orp_pos {
+        let mut char_style = if i == orp_pos {
             base_style.fg(Color::Red).add_modifier(Modifier::BOLD)
         } else {
             base_style.fg(Color::White)
         };
+        if let Some(bg) = word_bg {
+            char_style = char_style.bg(bg);
+        }
         spans.push(Span::styled(c.to_string(), char_style));
+    }
+
+    // Fill remaining width with background
+    if let Some(bg) = word_bg {
+        let used_width = left_padding + chars.len();
+        let remaining = (area.width as usize).saturating_sub(used_width);
+        if remaining > 0 {
+            spans.push(Span::styled(" ".repeat(remaining), Style::default().bg(bg)));
+        }
     }
 
     let word_para = Paragraph::new(Line::from(spans));
@@ -202,24 +229,37 @@ fn build_guide_line(width: usize, tick_pos: usize, tick_char: char) -> String {
 }
 
 /// Build a guide line with fade effect on the left side
-/// Returns a vector of Spans with gradually increasing brightness
+/// Pattern: dotted (┄) → dashed (╌) → solid (─) with increasing brightness
 fn build_faded_guide_line<'a>(width: usize, tick_pos: usize, tick_char: char) -> Vec<Span<'a>> {
     let mut spans = Vec::new();
+    let fade_end = FADE_TOTAL.min(width);
 
-    // Fade tilde characters on left (~6 chars fade from dim to full)
-    let fade_end = FADE_CHARS.min(width);
-    for i in 0..fade_end {
-        // Calculate brightness: 0->dim, FADE_CHARS->full
-        let brightness = 60 + (i * 60 / FADE_CHARS.max(1)) as u8;
-        let fade_style = Style::default().fg(Color::Rgb(brightness, brightness, brightness));
-        spans.push(Span::styled("~", fade_style));
-    }
+    for i in 0..width {
+        let (c, brightness) = if i < FADE_DOTTED.min(fade_end) {
+            // Dotted zone (dimmest): ┄
+            let b = 40 + (i * 20 / FADE_DOTTED.max(1)) as u8;
+            ('┄', b)
+        } else if i < (FADE_DOTTED + FADE_DASHED).min(fade_end) {
+            // Dashed zone (medium): ╌
+            let progress = i - FADE_DOTTED;
+            let b = 60 + (progress * 20 / FADE_DASHED.max(1)) as u8;
+            ('╌', b)
+        } else if i < fade_end {
+            // Solid fade zone (brightening): ─
+            let progress = i - FADE_DOTTED - FADE_DASHED;
+            let b = 80 + (progress * 40 / FADE_SOLID.max(1)) as u8;
+            ('─', b)
+        } else {
+            // Full brightness solid
+            ('─', 120)
+        };
 
-    // Rest of the line with full brightness guide color
-    let guide_style = Style::default().fg(GUIDE_COLOR);
-    for i in fade_end..width {
-        let c = if i == tick_pos { tick_char } else { '─' };
-        spans.push(Span::styled(c.to_string(), guide_style));
+        // Use tick char at tick position
+        let display_char = if i == tick_pos { tick_char } else { c };
+        let style = Style::default()
+            .fg(Color::Rgb(brightness, brightness, brightness))
+            .bg(RSVP_BG);
+        spans.push(Span::styled(display_char.to_string(), style));
     }
 
     spans
