@@ -1,5 +1,6 @@
 use crate::app::App;
 use crate::types::{BlockContext, TimedToken, TokenStyle};
+use crate::ui::GUTTER_WIDTH;
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
@@ -14,8 +15,11 @@ const MIN_PADDING: usize = 2;
 /// Threshold for centering: if content uses less than this fraction of width, center it
 const CENTER_THRESHOLD: f32 = 0.6;
 
+/// Gutter hint color - same as guide line color
+const GUTTER_COLOR: Color = Color::Rgb(120, 120, 120);
+
 /// Render context above the RSVP word
-pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
+pub fn render_before(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect>) {
     let lines = compute_document_lines(app, area.width as usize, app.context_width());
     let current_pos = app.position();
 
@@ -23,11 +27,19 @@ pub fn render_before(frame: &mut Frame, app: &App, area: Rect) {
     let (line_idx, _) = find_position_in_lines(&lines, current_pos);
 
     // Render lines up to and including current line (words before current_pos shown, rest blanked)
-    render_lines_before(frame, &lines, line_idx, current_pos, area, app.styling_enabled);
+    render_lines_before(
+        frame,
+        &lines,
+        line_idx,
+        current_pos,
+        area,
+        app.styling_enabled,
+        gutter_area,
+    );
 }
 
 /// Render context below the RSVP word
-pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
+pub fn render_after(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect>) {
     let lines = compute_document_lines(app, area.width as usize, app.context_width());
     let current_pos = app.position();
 
@@ -35,7 +47,15 @@ pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
     let (line_idx, _) = find_position_in_lines(&lines, current_pos);
 
     // Render lines from current line onward (words after current_pos shown, rest blanked)
-    render_lines_after(frame, &lines, line_idx, current_pos, area, app.styling_enabled);
+    render_lines_after(
+        frame,
+        &lines,
+        line_idx,
+        current_pos,
+        area,
+        app.styling_enabled,
+        gutter_area,
+    );
 }
 
 /// A line with its tokens and their global indices
@@ -202,6 +222,7 @@ fn render_lines_before(
     current_pos: usize,
     area: Rect,
     styling_enabled: bool,
+    gutter_area: Option<Rect>,
 ) {
     if area.height == 0 {
         return;
@@ -231,6 +252,7 @@ fn render_lines_before(
             current_pos,
             ContextType::Before,
             styling_enabled,
+            gutter_area,
         );
     }
 }
@@ -243,6 +265,7 @@ fn render_lines_after(
     current_pos: usize,
     area: Rect,
     styling_enabled: bool,
+    gutter_area: Option<Rect>,
 ) {
     if area.height == 0 || current_line_idx >= lines.len() {
         return;
@@ -268,6 +291,7 @@ fn render_lines_after(
             current_pos,
             ContextType::After,
             styling_enabled,
+            gutter_area,
         );
     }
 }
@@ -281,6 +305,7 @@ enum WordMode {
 
 /// Render a single line at the given y position
 /// Words are shown or blanked based on their position relative to current_pos
+#[allow(clippy::too_many_arguments)]
 fn render_line(
     frame: &mut Frame,
     line: &DocLine,
@@ -290,6 +315,7 @@ fn render_line(
     current_pos: usize,
     context_type: ContextType,
     styling_enabled: bool,
+    gutter_area: Option<Rect>,
 ) {
     // Blank separator lines - just skip (renders as empty space)
     if line.is_blank || line.tokens.is_empty() {
@@ -307,6 +333,23 @@ fn render_line(
 
     let first_token = &line.tokens[0].1;
     let prefix = block_prefix(&first_token.token.block);
+
+    // Render gutter hint if enabled
+    if let Some(gutter) = gutter_area {
+        let hint = block_hint_chars(&first_token.token.block);
+        if !hint.is_empty() {
+            let gutter_style = Style::default().fg(GUTTER_COLOR);
+            let hint_text = format!("{:>width$}", hint, width = GUTTER_WIDTH as usize);
+            let hint_para = Paragraph::new(Line::from(Span::styled(hint_text, gutter_style)));
+            let hint_area = Rect {
+                x: gutter.x,
+                y,
+                width: GUTTER_WIDTH,
+                height: 1,
+            };
+            frame.render_widget(hint_para, hint_area);
+        }
+    }
 
     // Calculate padding for centering short lines
     let content_width = calculate_line_width(line);
@@ -377,6 +420,24 @@ fn render_line(
         height: 1,
     };
     frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
+}
+
+/// Get hint characters for a block context (for gutter display)
+fn block_hint_chars(block: &BlockContext) -> &'static str {
+    match block {
+        BlockContext::Heading(1) => "#",
+        BlockContext::Heading(2) => "##",
+        BlockContext::Heading(3) => "###",
+        BlockContext::Heading(4) => "####",
+        BlockContext::Heading(5) => "#####",
+        BlockContext::Heading(6) => "######",
+        BlockContext::Heading(_) => "#",
+        BlockContext::ListItem(_) => "-",
+        BlockContext::Quote(_) => ">",
+        BlockContext::TableCell(_) => "|",
+        BlockContext::Callout(_) => "[!]",
+        BlockContext::Paragraph => "",
+    }
 }
 
 #[derive(Clone, Copy)]

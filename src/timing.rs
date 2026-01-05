@@ -52,11 +52,9 @@ pub fn generate_timing_hint(
     });
 
     // Structure modifier
-    // Priority: paragraph_end (300ms) > last_table_cell (300ms) > new_block (150ms)
-    let structure_modifier = if is_paragraph_end {
+    // Priority: paragraph_end or last_table_cell (300ms) > new_block (150ms)
+    let structure_modifier = if is_paragraph_end || is_last_table_cell {
         300
-    } else if is_last_table_cell {
-        300 // Last table cell gets same pause as paragraph end
     } else if is_new_block {
         150
     } else {

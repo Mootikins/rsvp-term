@@ -7,6 +7,11 @@ pub mod status;
 use crate::app::App;
 use ratatui::Frame;
 
+/// Width of the gutter column for hint chars
+pub const GUTTER_WIDTH: u16 = 4;
+/// Padding between gutter and content
+pub const GUTTER_PADDING: u16 = 2;
+
 pub fn render(frame: &mut Frame, app: &App) {
     use crate::app::ViewMode;
     use ratatui::layout::{Constraint, Direction, Layout};
@@ -39,7 +44,21 @@ pub fn render(frame: &mut Frame, app: &App) {
 fn render_reading_view(frame: &mut Frame, app: &App, area: ratatui::layout::Rect) {
     use ratatui::layout::{Constraint, Direction, Layout};
 
-    // Split into: context above, RSVP line, context below
+    // If hint_chars enabled, split horizontally first to create gutter area
+    let (gutter_area, content_area) = if app.hint_chars_enabled {
+        let horizontal = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(GUTTER_WIDTH + GUTTER_PADDING), // Gutter + padding
+                Constraint::Min(0),                                // Content
+            ])
+            .split(area);
+        (Some(horizontal[0]), horizontal[1])
+    } else {
+        (None, area)
+    };
+
+    // Split content into: context above, RSVP line, context below
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -47,9 +66,9 @@ fn render_reading_view(frame: &mut Frame, app: &App, area: ratatui::layout::Rect
             Constraint::Length(3),      // RSVP line (with padding)
             Constraint::Percentage(40), // Context below
         ])
-        .split(area);
+        .split(content_area);
 
-    context::render_before(frame, app, chunks[0]);
-    rsvp::render(frame, app, chunks[1]);
-    context::render_after(frame, app, chunks[2]);
+    context::render_before(frame, app, chunks[0], gutter_area);
+    rsvp::render(frame, app, chunks[1], gutter_area);
+    context::render_after(frame, app, chunks[2], gutter_area);
 }

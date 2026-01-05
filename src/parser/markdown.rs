@@ -167,7 +167,7 @@ fn split_into_words(text: &str) -> Vec<String> {
         .flat_map(|part| {
             // Handle hyphenated words
             if part.contains('-') {
-                split_hyphenated_word(&part)
+                split_hyphenated_word(part)
             } else {
                 vec![part.to_string()]
             }
