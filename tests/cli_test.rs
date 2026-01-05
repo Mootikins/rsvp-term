@@ -17,3 +17,13 @@ fn test_no_styling_flag_accepted() {
         .expect("Failed to run");
     assert!(output.status.success());
 }
+
+#[test]
+fn test_env_var_args_parsed() {
+    let output = Command::new(env!("CARGO_BIN_EXE_rsvp-term"))
+        .env("RSVP_TERM_ARGS", "--no-hint-chars")
+        .arg("--help")
+        .output()
+        .expect("Failed to run");
+    assert!(output.status.success());
+}

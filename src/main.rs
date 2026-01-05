@@ -55,7 +55,20 @@ struct Cli {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cli = Cli::parse();
+    // Parse env var args first, then CLI args (CLI wins on conflicts)
+    let env_args: Vec<String> = std::env::var("RSVP_TERM_ARGS")
+        .unwrap_or_default()
+        .split_whitespace()
+        .map(String::from)
+        .collect();
+
+    let cli_args: Vec<String> = std::env::args().collect();
+    let combined: Vec<String> = std::iter::once(cli_args[0].clone())
+        .chain(env_args)
+        .chain(cli_args.into_iter().skip(1))
+        .collect();
+
+    let cli = Cli::parse_from(combined);
 
     // Validate file exists
     if !cli.file.exists() {
