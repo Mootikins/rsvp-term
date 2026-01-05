@@ -20,6 +20,7 @@ expression: result.tokens
             structure_modifier: 75,
             is_cell_start: false,
             table_column: None,
+            is_block_start: true,
         },
     },
     Token {
@@ -37,6 +38,7 @@ expression: result.tokens
             structure_modifier: 75,
             is_cell_start: false,
             table_column: None,
+            is_block_start: true,
         },
     },
     Token {
@@ -54,6 +56,7 @@ expression: result.tokens
             structure_modifier: 0,
             is_cell_start: false,
             table_column: None,
+            is_block_start: false,
         },
     },
     Token {
@@ -71,6 +74,7 @@ expression: result.tokens
             structure_modifier: 0,
             is_cell_start: false,
             table_column: None,
+            is_block_start: false,
         },
     },
     Token {
@@ -88,6 +92,7 @@ expression: result.tokens
             structure_modifier: 0,
             is_cell_start: false,
             table_column: None,
+            is_block_start: false,
         },
     },
     Token {
@@ -105,6 +110,7 @@ expression: result.tokens
             structure_modifier: 0,
             is_cell_start: false,
             table_column: None,
+            is_block_start: false,
         },
     },
     Token {
@@ -122,6 +128,7 @@ expression: result.tokens
             structure_modifier: 150,
             is_cell_start: false,
             table_column: None,
+            is_block_start: false,
         },
     },
     Token {
@@ -141,6 +148,7 @@ expression: result.tokens
             structure_modifier: 75,
             is_cell_start: false,
             table_column: None,
+            is_block_start: true,
         },
     },
     Token {
@@ -158,6 +166,7 @@ expression: result.tokens
             structure_modifier: 75,
             is_cell_start: false,
             table_column: None,
+            is_block_start: true,
         },
     },
     Token {
@@ -175,6 +184,7 @@ expression: result.tokens
             structure_modifier: 150,
             is_cell_start: false,
             table_column: None,
+            is_block_start: false,
         },
     },
 ]

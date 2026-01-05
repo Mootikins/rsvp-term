@@ -83,7 +83,7 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
 
         // Detect block transitions
         let is_new_list_item = matches!(&token.token.block, BlockContext::ListItem(_))
-            && token.token.timing_hint.structure_modifier > 0;
+            && token.token.timing_hint.is_block_start;
 
         let block_changed = is_new_list_item
             || last_block.is_some_and(|b| {

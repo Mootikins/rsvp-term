@@ -66,6 +66,7 @@ fn test_combined_modifiers() {
         structure_modifier: 0,
         is_cell_start: false,
         table_column: None,
+        is_block_start: false,
     };
     let token = make_token("sentence,", hint);
     let duration = calculate_duration(&token, 300);

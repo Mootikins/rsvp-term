@@ -73,5 +73,6 @@ pub fn generate_timing_hint(
         structure_modifier,
         is_cell_start,
         table_column,
+        is_block_start: is_new_block,
     }
 }

@@ -79,6 +79,8 @@ pub struct TimingHint {
     pub is_cell_start: bool,
     /// Column index for table cells (0-indexed), None if not in a table
     pub table_column: Option<usize>,
+    /// True if this is the first word of a new block (list item, paragraph, etc.)
+    pub is_block_start: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
