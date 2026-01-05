@@ -76,7 +76,7 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
     let mut last_block: Option<&BlockContext> = None;
     let mut last_table_row: Option<usize> = None;
 
-    for (idx, token) in tokens.iter().enumerate().skip(start).take(end - start) {
+    for (idx, token) in (start..end).zip(&tokens[start..end]) {
         let current_table_row = table_row(&token.token.block);
         let is_table_cell = current_table_row.is_some();
         let was_in_table = last_table_row.is_some();
