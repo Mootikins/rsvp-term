@@ -5,13 +5,16 @@ use crossterm::{
     ExecutableCommand,
 };
 use ratatui::prelude::*;
-use std::{io::stdout, time::{Duration, Instant}};
+use std::{
+    io::stdout,
+    time::{Duration, Instant},
+};
 
 use rsvp_term::{
     app::{App, ViewMode},
+    orp::calculate_orp,
     parser::{DocumentParser, EpubParser, MarkdownParser},
     timing::calculate_duration,
-    orp::calculate_orp,
     types::TimedToken,
     ui,
 };
@@ -76,7 +79,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Convert to timed tokens
     let wpm = 300u16;
-    let timed_tokens: Vec<TimedToken> = doc.tokens
+    let timed_tokens: Vec<TimedToken> = doc
+        .tokens
         .into_iter()
         .map(|token| {
             let duration = calculate_duration(&token, wpm);
@@ -95,7 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Setup terminal
     enable_raw_mode()?;
     stdout().execute(EnterAlternateScreen)?;
-    let _guard = TerminalGuard;  // Cleanup guaranteed on drop
+    let _guard = TerminalGuard; // Cleanup guaranteed on drop
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
 
     // Main loop
@@ -106,7 +110,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         terminal.draw(|frame| ui::render(frame, &app))?;
 
         // Calculate time until next word using CURRENT wpm (not pre-calculated)
-        let next_duration = app.current_token()
+        let next_duration = app
+            .current_token()
             .map(|t| Duration::from_millis(calculate_duration(&t.token, app.wpm())))
             .unwrap_or(Duration::from_millis(200));
 
@@ -122,7 +127,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Event::Key(key) = event::read()? {
                 if key.kind == KeyEventKind::Press {
                     // Handle Ctrl+C globally
-                    if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
+                    if key.modifiers.contains(KeyModifiers::CONTROL)
+                        && key.code == KeyCode::Char('c')
+                    {
                         break;
                     }
 
@@ -133,17 +140,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         // Reading mode
                         (ViewMode::Reading, KeyCode::Char(' ')) => app.toggle_pause(),
-                        (ViewMode::Reading, KeyCode::Char('j') | KeyCode::Down) => app.decrease_wpm(),
+                        (ViewMode::Reading, KeyCode::Char('j') | KeyCode::Down) => {
+                            app.decrease_wpm()
+                        }
                         (ViewMode::Reading, KeyCode::Char('k') | KeyCode::Up) => app.increase_wpm(),
-                        (ViewMode::Reading, KeyCode::Char('h') | KeyCode::Left) => app.rewind_sentence(),
-                        (ViewMode::Reading, KeyCode::Char('l') | KeyCode::Right) => app.skip_sentence(),
+                        (ViewMode::Reading, KeyCode::Char('h') | KeyCode::Left) => {
+                            app.rewind_sentence()
+                        }
+                        (ViewMode::Reading, KeyCode::Char('l') | KeyCode::Right) => {
+                            app.skip_sentence()
+                        }
                         (ViewMode::Reading, KeyCode::Char('o')) => app.toggle_outline(),
 
                         // Outline mode
-                        (ViewMode::Outline, KeyCode::Char('j') | KeyCode::Down) => app.outline_down(),
+                        (ViewMode::Outline, KeyCode::Char('j') | KeyCode::Down) => {
+                            app.outline_down()
+                        }
                         (ViewMode::Outline, KeyCode::Char('k') | KeyCode::Up) => app.outline_up(),
                         (ViewMode::Outline, KeyCode::Enter) => app.jump_to_section(),
-                        (ViewMode::Outline, KeyCode::Esc | KeyCode::Char('o')) => app.toggle_outline(),
+                        (ViewMode::Outline, KeyCode::Esc | KeyCode::Char('o')) => {
+                            app.toggle_outline()
+                        }
 
                         _ => {}
                     }
@@ -152,7 +169,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         // Advance word if not paused and in reading mode
-        if !app.is_paused() && app.view_mode() == ViewMode::Reading
+        if !app.is_paused()
+            && app.view_mode() == ViewMode::Reading
             && last_advance.elapsed() >= next_duration
         {
             app.advance();

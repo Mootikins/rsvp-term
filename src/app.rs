@@ -1,4 +1,4 @@
-use crate::types::{TimedToken, Section};
+use crate::types::{Section, TimedToken};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ViewMode {
@@ -26,7 +26,11 @@ impl App {
         Self::with_context_width(tokens, sections, DEFAULT_CONTEXT_WIDTH)
     }
 
-    pub fn with_context_width(tokens: Vec<TimedToken>, sections: Vec<Section>, context_width: usize) -> Self {
+    pub fn with_context_width(
+        tokens: Vec<TimedToken>,
+        sections: Vec<Section>,
+        context_width: usize,
+    ) -> Self {
         Self {
             tokens,
             sections,
@@ -42,34 +46,59 @@ impl App {
 
     // Getters
     #[must_use]
-    pub const fn position(&self) -> usize { self.position }
+    pub const fn position(&self) -> usize {
+        self.position
+    }
     #[must_use]
-    pub const fn wpm(&self) -> u16 { self.wpm }
+    pub const fn wpm(&self) -> u16 {
+        self.wpm
+    }
     #[must_use]
-    pub const fn is_paused(&self) -> bool { self.paused }
+    pub const fn is_paused(&self) -> bool {
+        self.paused
+    }
     #[must_use]
-    pub const fn view_mode(&self) -> ViewMode { self.view_mode }
+    pub const fn view_mode(&self) -> ViewMode {
+        self.view_mode
+    }
     #[must_use]
-    pub fn current_token(&self) -> Option<&TimedToken> { self.tokens.get(self.position) }
+    pub fn current_token(&self) -> Option<&TimedToken> {
+        self.tokens.get(self.position)
+    }
     #[must_use]
-    pub fn tokens(&self) -> &[TimedToken] { &self.tokens }
+    pub fn tokens(&self) -> &[TimedToken] {
+        &self.tokens
+    }
     #[must_use]
-    pub fn sections(&self) -> &[Section] { &self.sections }
+    pub fn sections(&self) -> &[Section] {
+        &self.sections
+    }
     #[must_use]
-    pub const fn outline_selection(&self) -> usize { self.outline_selection }
+    pub const fn outline_selection(&self) -> usize {
+        self.outline_selection
+    }
 
     #[must_use]
     pub fn progress(&self) -> f64 {
-        if self.tokens.is_empty() { 0.0 }
-        else { self.position as f64 / self.tokens.len() as f64 }
+        if self.tokens.is_empty() {
+            0.0
+        } else {
+            self.position as f64 / self.tokens.len() as f64
+        }
     }
 
     // Mutations
-    pub fn toggle_pause(&mut self) { self.paused = !self.paused; }
+    pub fn toggle_pause(&mut self) {
+        self.paused = !self.paused;
+    }
 
-    pub fn increase_wpm(&mut self) { self.wpm = (self.wpm + 25).min(1000); }
+    pub fn increase_wpm(&mut self) {
+        self.wpm = (self.wpm + 25).min(1000);
+    }
 
-    pub fn decrease_wpm(&mut self) { self.wpm = self.wpm.saturating_sub(25).max(100); }
+    pub fn decrease_wpm(&mut self) {
+        self.wpm = self.wpm.saturating_sub(25).max(100);
+    }
 
     pub fn advance(&mut self) {
         if self.position < self.tokens.len().saturating_sub(1) {
@@ -110,12 +139,18 @@ impl App {
     }
 
     #[must_use]
-    pub const fn show_help(&self) -> bool { self.show_help }
+    pub const fn show_help(&self) -> bool {
+        self.show_help
+    }
 
-    pub fn toggle_help(&mut self) { self.show_help = !self.show_help; }
+    pub fn toggle_help(&mut self) {
+        self.show_help = !self.show_help;
+    }
 
     #[must_use]
-    pub const fn context_width(&self) -> usize { self.context_width }
+    pub const fn context_width(&self) -> usize {
+        self.context_width
+    }
 
     #[must_use]
     pub fn current_section_title(&self) -> Option<&str> {

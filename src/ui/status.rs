@@ -1,20 +1,20 @@
+use crate::app::App;
 use ratatui::{
-    Frame,
     layout::Rect,
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Paragraph, Gauge},
+    widgets::{Gauge, Paragraph},
+    Frame,
 };
-use crate::app::App;
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect) {
-    use ratatui::layout::{Layout, Direction, Constraint};
+    use ratatui::layout::{Constraint, Direction, Layout};
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(1),  // Section title + progress %
-            Constraint::Length(1),  // Progress bar + WPM + state
+            Constraint::Length(1), // Section title + progress %
+            Constraint::Length(1), // Progress bar + WPM + state
         ])
         .split(area);
 

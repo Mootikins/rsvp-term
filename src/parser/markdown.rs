@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use markdown_it::parser::inline::Text;
 use markdown_it::plugins::cmark::block::{
     blockquote::Blockquote,
     fence::CodeFence,
@@ -14,7 +15,6 @@ use markdown_it::plugins::cmark::inline::{
     link::Link,
 };
 use markdown_it::plugins::extra::tables::{Table, TableCell, TableRow};
-use markdown_it::parser::inline::Text;
 use markdown_it::{plugins::cmark, plugins::extra, MarkdownIt, Node};
 
 use crate::parser::traits::{DocumentParser, ParseError, ParsedDocument};
@@ -76,11 +76,17 @@ impl ParserContext {
     }
 
     fn current_style(&self) -> TokenStyle {
-        self.style_stack.last().cloned().unwrap_or(TokenStyle::Normal)
+        self.style_stack
+            .last()
+            .cloned()
+            .unwrap_or(TokenStyle::Normal)
     }
 
     fn current_block(&self) -> BlockContext {
-        self.block_stack.last().cloned().unwrap_or(BlockContext::Paragraph)
+        self.block_stack
+            .last()
+            .cloned()
+            .unwrap_or(BlockContext::Paragraph)
     }
 
     fn push_style(&mut self, style: TokenStyle) {
@@ -340,7 +346,9 @@ mod tests {
     #[test]
     fn test_multiple_headings() {
         let parser = MarkdownParser::new();
-        let result = parser.parse_str("# First\n\n## Second\n\n### Third").unwrap();
+        let result = parser
+            .parse_str("# First\n\n## Second\n\n### Third")
+            .unwrap();
         assert_eq!(result.sections.len(), 3);
         assert_eq!(result.sections[0].level, 1);
         assert_eq!(result.sections[1].level, 2);
@@ -358,7 +366,9 @@ mod tests {
     #[test]
     fn test_multiple_lists_depth_reset() {
         let parser = MarkdownParser::new();
-        let result = parser.parse_str("- Item 1\n\n- Item 2\n\n- Item 3").unwrap();
+        let result = parser
+            .parse_str("- Item 1\n\n- Item 2\n\n- Item 3")
+            .unwrap();
         // All should have depth 1, not 1, 2, 3 (depth must reset between lists)
         for token in &result.tokens {
             if let BlockContext::ListItem(depth) = &token.block {

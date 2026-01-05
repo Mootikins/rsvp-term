@@ -1,17 +1,17 @@
 [package]
 name = "rsvp-term"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "TUI for RSVP reading of markdown prose"
 license = "MIT"
 
 [dependencies]
-ratatui = "0.29"
-crossterm = "0.28"
+ratatui = "0.30"
+crossterm = "0.29"
 markdown-it = "0.6"
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
 epub = "2.1"
-html2text = "0.12"
+html2text = "0.16"
 
 [dev-dependencies]
-insta = "1.41"
+insta = "1.46"

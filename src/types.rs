@@ -11,11 +11,11 @@ pub enum TokenStyle {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BlockContext {
     Paragraph,
-    ListItem(usize),    // depth
-    Quote(usize),       // depth
-    Callout(String),    // type
-    Heading(u8),        // level 1-6
-    TableCell(usize),   // table cell with row number (0-indexed)
+    ListItem(usize),  // depth
+    Quote(usize),     // depth
+    Callout(String),  // type
+    Heading(u8),      // level 1-6
+    TableCell(usize), // table cell with row number (0-indexed)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

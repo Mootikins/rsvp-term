@@ -1,9 +1,9 @@
 use ratatui::{
-    Frame,
-    layout::{Rect, Alignment},
+    layout::{Alignment, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Clear},
+    widgets::{Block, Borders, Clear, Paragraph},
+    Frame,
 };
 
 pub fn render(frame: &mut Frame, area: Rect) {
@@ -13,7 +13,12 @@ pub fn render(frame: &mut Frame, area: Rect) {
     let x = (area.width.saturating_sub(width)) / 2;
     let y = (area.height.saturating_sub(height)) / 2;
 
-    let help_area = Rect { x, y, width, height };
+    let help_area = Rect {
+        x,
+        y,
+        width,
+        height,
+    };
 
     // Clear background
     frame.render_widget(Clear, help_area);
@@ -30,14 +35,19 @@ pub fn render(frame: &mut Frame, area: Rect) {
         Line::from("q         Quit"),
         Line::from("?         Toggle help"),
         Line::from(""),
-        Line::from(Span::styled("Press ? to close", Style::default().fg(Color::DarkGray))),
+        Line::from(Span::styled(
+            "Press ? to close",
+            Style::default().fg(Color::DarkGray),
+        )),
     ];
 
     let paragraph = Paragraph::new(help_text)
-        .block(Block::default()
-            .title(" Help ")
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::Cyan)))
+        .block(
+            Block::default()
+                .title(" Help ")
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Cyan)),
+        )
         .alignment(Alignment::Left);
 
     frame.render_widget(paragraph, help_area);

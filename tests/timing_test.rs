@@ -1,5 +1,5 @@
 use rsvp_term::timing::{calculate_duration, generate_timing_hint};
-use rsvp_term::types::{Token, TokenStyle, BlockContext, TimingHint};
+use rsvp_term::types::{BlockContext, TimingHint, Token, TokenStyle};
 
 fn make_token(word: &str, hint: TimingHint) -> Token {
     Token {

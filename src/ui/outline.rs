@@ -1,14 +1,15 @@
+use crate::app::App;
 use ratatui::{
-    Frame,
     layout::Rect,
-    style::{Color, Style, Modifier},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem},
+    Frame,
 };
-use crate::app::App;
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect) {
-    let items: Vec<ListItem> = app.sections()
+    let items: Vec<ListItem> = app
+        .sections()
         .iter()
         .enumerate()
         .map(|(i, section)| {
@@ -16,7 +17,9 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
             let text = format!("{} {}", prefix, section.title);
 
             let style = if i == app.outline_selection() {
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(Color::White)
             };
@@ -25,10 +28,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
         })
         .collect();
 
-    let list = List::new(items)
-        .block(Block::default()
-            .title(" OUTLINE ")
-            .borders(Borders::ALL));
+    let list = List::new(items).block(Block::default().title(" OUTLINE ").borders(Borders::ALL));
 
     frame.render_widget(list, area);
 }

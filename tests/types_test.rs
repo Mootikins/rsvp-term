@@ -1,4 +1,4 @@
-use rsvp_term::types::{Token, TokenStyle, BlockContext, TimingHint};
+use rsvp_term::types::{BlockContext, TimingHint, Token, TokenStyle};
 
 #[test]
 fn test_token_creation() {

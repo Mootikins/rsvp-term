@@ -1,21 +1,21 @@
-pub mod rsvp;
-pub mod status;
-pub mod outline;
 pub mod context;
 pub mod help;
+pub mod outline;
+pub mod rsvp;
+pub mod status;
 
-use ratatui::Frame;
 use crate::app::App;
+use ratatui::Frame;
 
 pub fn render(frame: &mut Frame, app: &App) {
     use crate::app::ViewMode;
-    use ratatui::layout::{Layout, Direction, Constraint};
+    use ratatui::layout::{Constraint, Direction, Layout};
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(0),      // Main content
-            Constraint::Length(2),   // Status bar
+            Constraint::Min(0),    // Main content
+            Constraint::Length(2), // Status bar
         ])
         .split(frame.area());
 
@@ -37,15 +37,15 @@ pub fn render(frame: &mut Frame, app: &App) {
 }
 
 fn render_reading_view(frame: &mut Frame, app: &App, area: ratatui::layout::Rect) {
-    use ratatui::layout::{Layout, Direction, Constraint};
+    use ratatui::layout::{Constraint, Direction, Layout};
 
     // Split into: context above, RSVP line, context below
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage(40),  // Context above
-            Constraint::Length(3),        // RSVP line (with padding)
-            Constraint::Percentage(40),  // Context below
+            Constraint::Percentage(40), // Context above
+            Constraint::Length(3),      // RSVP line (with padding)
+            Constraint::Percentage(40), // Context below
         ])
         .split(area);
 

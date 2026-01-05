@@ -1,11 +1,11 @@
+use crate::app::App;
 use ratatui::{
-    Frame,
     layout::Rect,
-    style::{Color, Style, Modifier},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::Paragraph,
+    Frame,
 };
-use crate::app::App;
 
 /// Guide line color - slightly lighter than context text
 const GUIDE_COLOR: Color = Color::Rgb(120, 120, 120);

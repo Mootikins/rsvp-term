@@ -1,12 +1,12 @@
+use crate::app::App;
+use crate::types::{BlockContext, TimedToken};
 use ratatui::{
-    Frame,
     layout::Rect,
     style::{Color, Style},
     text::{Line, Span},
     widgets::Paragraph,
+    Frame,
 };
-use crate::app::App;
-use crate::types::{BlockContext, TimedToken};
 
 /// Left padding for context lines
 const LEFT_PADDING: usize = 4;
@@ -38,7 +38,7 @@ pub fn render_after(frame: &mut Frame, app: &App, area: Rect) {
 /// A line with its tokens and their global indices
 struct DocLine<'a> {
     tokens: Vec<(usize, &'a TimedToken)>, // (global_index, token)
-    is_blank: bool, // True for separator lines between blocks
+    is_blank: bool,                       // True for separator lines between blocks
 }
 
 /// Compute document lines from tokens around current position
@@ -78,13 +78,19 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
         let would_overflow = current_width + word_width > max_chars;
 
         if (block_changed || table_transition || would_overflow) && !current_line.is_empty() {
-            lines.push(DocLine { tokens: current_line, is_blank: false });
+            lines.push(DocLine {
+                tokens: current_line,
+                is_blank: false,
+            });
             current_line = Vec::new();
             current_width = 0;
 
             // Insert blank line on block transitions (not just overflow)
             if block_changed || table_transition {
-                lines.push(DocLine { tokens: Vec::new(), is_blank: true });
+                lines.push(DocLine {
+                    tokens: Vec::new(),
+                    is_blank: true,
+                });
             }
         }
 
@@ -95,7 +101,10 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
     }
 
     if !current_line.is_empty() {
-        lines.push(DocLine { tokens: current_line, is_blank: false });
+        lines.push(DocLine {
+            tokens: current_line,
+            is_blank: false,
+        });
     }
 
     lines
@@ -132,7 +141,13 @@ const fn block_prefix(block: &BlockContext) -> &'static str {
 }
 
 /// Render lines before the current line (above context)
-fn render_lines_before(frame: &mut Frame, lines: &[DocLine], current_line_idx: usize, current_pos: usize, area: Rect) {
+fn render_lines_before(
+    frame: &mut Frame,
+    lines: &[DocLine],
+    current_line_idx: usize,
+    current_pos: usize,
+    area: Rect,
+) {
     if area.height == 0 {
         return;
     }
@@ -152,7 +167,15 @@ fn render_lines_before(frame: &mut Frame, lines: &[DocLine], current_line_idx: u
             continue;
         }
 
-        render_line(frame, line, y, area.width, distance_from_bottom, current_pos, ContextType::Before);
+        render_line(
+            frame,
+            line,
+            y,
+            area.width,
+            distance_from_bottom,
+            current_pos,
+            ContextType::Before,
+        );
     }
 }
 
@@ -179,7 +202,15 @@ fn render_lines_after(
             break;
         }
 
-        render_line(frame, line, y, area.width, i, current_pos, ContextType::After);
+        render_line(
+            frame,
+            line,
+            y,
+            area.width,
+            i,
+            current_pos,
+            ContextType::After,
+        );
     }
 }
 
@@ -219,10 +250,7 @@ fn render_line(
     let prefix = block_prefix(&first_token.token.block);
 
     let padding = " ".repeat(LEFT_PADDING);
-    let mut spans = vec![
-        Span::raw(padding),
-        Span::styled(prefix, style),
-    ];
+    let mut spans = vec![Span::raw(padding), Span::styled(prefix, style)];
 
     // Add words - visible or blank depending on position
     let mut prev_table_row: Option<usize> = None;
@@ -239,11 +267,19 @@ fn render_line(
         let mode = match context_type {
             ContextType::Before => {
                 // In "before" context: show words before current_pos, blank others
-                if *global_idx < current_pos { WordMode::Visible } else { WordMode::Blank }
+                if *global_idx < current_pos {
+                    WordMode::Visible
+                } else {
+                    WordMode::Blank
+                }
             }
             ContextType::After => {
                 // In "after" context: show words after current_pos, blank others
-                if *global_idx > current_pos { WordMode::Visible } else { WordMode::Blank }
+                if *global_idx > current_pos {
+                    WordMode::Visible
+                } else {
+                    WordMode::Blank
+                }
             }
         };
 
@@ -262,7 +298,12 @@ fn render_line(
         spans.push(Span::styled("|", style));
     }
 
-    let line_area = Rect { x: 0, y, width, height: 1 };
+    let line_area = Rect {
+        x: 0,
+        y,
+        width,
+        height: 1,
+    };
     frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
 }
 

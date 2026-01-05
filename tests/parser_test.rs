@@ -1,5 +1,5 @@
 use insta::assert_debug_snapshot;
-use rsvp_term::parser::{MarkdownParser, DocumentParser};
+use rsvp_term::parser::{DocumentParser, MarkdownParser};
 use rsvp_term::types::TokenStyle;
 
 #[test]
@@ -43,7 +43,9 @@ fn test_parse_italic() {
 #[test]
 fn test_skip_code_block() {
     let parser = MarkdownParser::new();
-    let result = parser.parse_str("Before\n\n```\ncode here\n```\n\nAfter").unwrap();
+    let result = parser
+        .parse_str("Before\n\n```\ncode here\n```\n\nAfter")
+        .unwrap();
 
     let words: Vec<&str> = result.tokens.iter().map(|t| t.word.as_str()).collect();
     assert!(!words.contains(&"code"));
@@ -66,9 +68,11 @@ fn test_skip_image() {
 #[test]
 fn test_snapshot_simple_doc() {
     let parser = MarkdownParser::new();
-    let result = parser.parse_str(
-        "# Hello\n\nThis is **bold** and *italic* text.\n\n## World\n\nAnother paragraph."
-    ).unwrap();
+    let result = parser
+        .parse_str(
+            "# Hello\n\nThis is **bold** and *italic* text.\n\n## World\n\nAnother paragraph.",
+        )
+        .unwrap();
 
     assert_debug_snapshot!(result.tokens);
     assert_debug_snapshot!(result.sections);
@@ -77,9 +81,9 @@ fn test_snapshot_simple_doc() {
 #[test]
 fn test_snapshot_list() {
     let parser = MarkdownParser::new();
-    let result = parser.parse_str(
-        "- First item\n- Second item\n- Third item"
-    ).unwrap();
+    let result = parser
+        .parse_str("- First item\n- Second item\n- Third item")
+        .unwrap();
 
     assert_debug_snapshot!(result.tokens);
 }
@@ -87,9 +91,9 @@ fn test_snapshot_list() {
 #[test]
 fn test_snapshot_quote() {
     let parser = MarkdownParser::new();
-    let result = parser.parse_str(
-        "> This is a quote\n> with multiple lines"
-    ).unwrap();
+    let result = parser
+        .parse_str("> This is a quote\n> with multiple lines")
+        .unwrap();
 
     assert_debug_snapshot!(result.tokens);
 }

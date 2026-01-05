@@ -1,5 +1,5 @@
 use rsvp_term::app::{App, ViewMode};
-use rsvp_term::types::{Token, TokenStyle, BlockContext, TimingHint, TimedToken};
+use rsvp_term::types::{BlockContext, TimedToken, TimingHint, Token, TokenStyle};
 
 fn make_timed_token(word: &str) -> TimedToken {
     TimedToken {
@@ -68,10 +68,7 @@ fn test_app_wpm_bounds() {
 
 #[test]
 fn test_app_advance() {
-    let tokens = vec![
-        make_timed_token("hello"),
-        make_timed_token("world"),
-    ];
+    let tokens = vec![make_timed_token("hello"), make_timed_token("world")];
     let mut app = App::new(tokens, vec![]);
 
     assert_eq!(app.position(), 0);

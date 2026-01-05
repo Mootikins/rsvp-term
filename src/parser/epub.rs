@@ -23,13 +23,19 @@ impl EpubParser {
 
     /// Convert XHTML content to markdown using html2text.
     fn xhtml_to_markdown(xhtml: &str) -> String {
-        html2text::from_read(Cursor::new(xhtml), 10000)
+        html2text::from_read(Cursor::new(xhtml), 10000).unwrap_or_default()
     }
 
     /// Sanitize a string for use as a filename.
     fn sanitize_filename(s: &str) -> String {
         s.chars()
-            .map(|c| if c.is_alphanumeric() || c == ' ' || c == '-' || c == '_' { c } else { '_' })
+            .map(|c| {
+                if c.is_alphanumeric() || c == ' ' || c == '-' || c == '_' {
+                    c
+                } else {
+                    '_'
+                }
+            })
             .collect::<String>()
             .trim()
             .to_string()
@@ -49,14 +55,18 @@ impl EpubParser {
     }
 
     /// Get chapter title from TOC for current chapter index.
-    fn get_chapter_title(doc: &EpubDoc<std::io::BufReader<std::fs::File>>, chapter_idx: usize) -> Option<String> {
+    fn get_chapter_title(
+        doc: &EpubDoc<std::io::BufReader<std::fs::File>>,
+        chapter_idx: usize,
+    ) -> Option<String> {
         // Get the current spine item's path
         let spine_item = doc.spine.get(chapter_idx)?;
         let resource = doc.resources.get(&spine_item.idref)?;
         let resource_path = resource.path.to_string_lossy();
 
         // Find matching TOC entry
-        doc.toc.iter()
+        doc.toc
+            .iter()
             .find(|nav| nav.content.ends_with(resource_path.as_ref()))
             .map(|nav| nav.label.clone())
     }
@@ -71,9 +81,8 @@ impl EpubParser {
     /// Returns [`ParseError::ParseError`] if the EPUB cannot be opened.
     /// Returns [`ParseError::IoError`] if directory creation or file writing fails.
     pub fn export_chapters(&self, path: &Path) -> Result<(String, usize), ParseError> {
-        let mut doc = EpubDoc::new(path).map_err(|e| {
-            ParseError::ParseError(format!("Failed to open EPUB: {e}"))
-        })?;
+        let mut doc = EpubDoc::new(path)
+            .map_err(|e| ParseError::ParseError(format!("Failed to open EPUB: {e}")))?;
 
         let book_title = Self::get_book_title(&doc, path);
         let output_dir = Path::new(&book_title);
@@ -125,9 +134,8 @@ impl Default for EpubParser {
 
 impl DocumentParser for EpubParser {
     fn parse_file(&self, path: &Path) -> Result<ParsedDocument, ParseError> {
-        let mut doc = EpubDoc::new(path).map_err(|e| {
-            ParseError::ParseError(format!("Failed to open EPUB: {e}"))
-        })?;
+        let mut doc = EpubDoc::new(path)
+            .map_err(|e| ParseError::ParseError(format!("Failed to open EPUB: {e}")))?;
 
         let mut combined_markdown = String::new();
         let num_chapters = doc.get_num_chapters();
@@ -175,7 +183,7 @@ impl DocumentParser for EpubParser {
 
     fn parse_str(&self, _content: &str) -> Result<ParsedDocument, ParseError> {
         Err(ParseError::ParseError(
-            "EPUB parser does not support parsing from string".to_string()
+            "EPUB parser does not support parsing from string".to_string(),
         ))
     }
 }
@@ -187,8 +195,14 @@ mod tests {
     #[test]
     fn test_sanitize_filename() {
         assert_eq!(EpubParser::sanitize_filename("Hello World"), "Hello World");
-        assert_eq!(EpubParser::sanitize_filename("Book: A Story"), "Book_ A Story");
-        assert_eq!(EpubParser::sanitize_filename("Test/File\\Name"), "Test_File_Name");
+        assert_eq!(
+            EpubParser::sanitize_filename("Book: A Story"),
+            "Book_ A Story"
+        );
+        assert_eq!(
+            EpubParser::sanitize_filename("Test/File\\Name"),
+            "Test_File_Name"
+        );
     }
 
     #[test]
