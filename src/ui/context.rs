@@ -200,7 +200,7 @@ fn calculate_line_width(line: &DocLine) -> usize {
     }
 
     let first_token = &line.tokens[0].1;
-    let prefix_width = block_prefix(&first_token.token.block).chars().count();
+    let prefix_width = line_prefix(first_token).chars().count();
 
     let mut width = prefix_width;
     let mut prev_table_row: Option<usize> = None;
@@ -233,6 +233,16 @@ const fn block_prefix(block: &BlockContext) -> &'static str {
         BlockContext::Quote(_) | BlockContext::TableCell(_) => "| ",
         BlockContext::Heading(_) | BlockContext::Paragraph => "",
         BlockContext::Callout(_) => "[i] ",
+    }
+}
+
+/// Get line prefix - only show list prefix on first line of list item
+fn line_prefix(token: &TimedToken) -> &'static str {
+    match &token.token.block {
+        // Only show - for first line of list item (not continuation lines)
+        BlockContext::ListItem(_) if token.token.timing_hint.is_block_start => "- ",
+        BlockContext::ListItem(_) => "",
+        other => block_prefix(other),
     }
 }
 
@@ -367,7 +377,7 @@ fn render_line(
     let style = Style::default().fg(gray);
 
     let first_token = &line.tokens[0].1;
-    let prefix = block_prefix(&first_token.token.block);
+    let prefix = line_prefix(first_token);
 
     // Render gutter hint if enabled
     if let Some(gutter) = gutter_area {
