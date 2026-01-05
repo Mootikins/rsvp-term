@@ -24,7 +24,12 @@ pub fn calculate_duration(token: &Token, wpm: u16) -> u64 {
 
 /// Generate timing hints based on word characteristics.
 #[must_use]
-pub fn generate_timing_hint(word: &str, is_paragraph_end: bool, is_new_block: bool) -> TimingHint {
+pub fn generate_timing_hint(
+    word: &str,
+    is_paragraph_end: bool,
+    is_new_block: bool,
+    is_last_table_cell: bool,
+) -> TimingHint {
     let len = word.chars().count();
 
     // Word length modifier - safe conversion with bounded fallback
@@ -47,8 +52,11 @@ pub fn generate_timing_hint(word: &str, is_paragraph_end: bool, is_new_block: bo
     });
 
     // Structure modifier
+    // Priority: paragraph_end (300ms) > last_table_cell (300ms) > new_block (150ms)
     let structure_modifier = if is_paragraph_end {
         300
+    } else if is_last_table_cell {
+        300 // Last table cell gets same pause as paragraph end
     } else if is_new_block {
         150
     } else {

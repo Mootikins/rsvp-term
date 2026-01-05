@@ -146,3 +146,66 @@ fn test_inline_code_with_multiple_words_preserved() {
     assert_eq!(result.tokens[1].word, "my function name");
     assert_eq!(result.tokens[1].style, rsvp_term::types::TokenStyle::Code);
 }
+
+#[test]
+fn test_hyphenated_words_split_when_long() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("This is well-known text").unwrap();
+    // "well-known" should be split into "well-" and "known" (both > 3 chars)
+    assert_eq!(result.tokens.len(), 5);
+    assert_eq!(result.tokens[2].word, "well-");
+    assert_eq!(result.tokens[3].word, "known");
+}
+
+#[test]
+fn test_short_hyphenated_words_preserved() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("This is co-op text").unwrap();
+    // "co-op" should be preserved as single word (portions ≤ 3 chars)
+    assert_eq!(result.tokens.len(), 4);
+    assert_eq!(result.tokens[2].word, "co-op");
+}
+
+#[test]
+fn test_multiple_hyphens_split() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("Check mother-in-law").unwrap();
+    // "mother-in-law" → "mother-", "in-", "law"
+    assert_eq!(result.tokens.len(), 4);
+    assert_eq!(result.tokens[1].word, "mother-");
+    assert_eq!(result.tokens[2].word, "in-");
+    assert_eq!(result.tokens[3].word, "law");
+}
+
+#[test]
+fn test_table_last_column_longer_pause() {
+    let parser = MarkdownParser::new();
+    let result = parser
+        .parse_str(
+            "| Col1 | Col2 | Col3 |\n|------|------|------|\n| Data | Data | Data |",
+        )
+        .unwrap();
+
+    // Find tokens from each column
+    let col1_tokens: Vec<_> = result
+        .tokens
+        .iter()
+        .filter(|t| t.word == "Col1" || t.word == "Data")
+        .take(2)
+        .collect();
+
+    let col3_tokens: Vec<_> = result
+        .tokens
+        .iter()
+        .filter(|t| t.word == "Col3")
+        .collect();
+
+    // Column 3 tokens should have longer structure modifier than column 1
+    // Column 1: structure_modifier should be 150 (standard new cell)
+    // Column 3: structure_modifier should be > 150 (last cell special handling)
+    assert!(col3_tokens[0].timing_hint.structure_modifier > col1_tokens[0].timing_hint.structure_modifier,
+        "Last column should have longer pause: col3={:?} vs col1={:?}",
+        col3_tokens[0].timing_hint.structure_modifier,
+        col1_tokens[0].timing_hint.structure_modifier
+    );
+}

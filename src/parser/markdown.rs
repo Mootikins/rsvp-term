@@ -60,6 +60,12 @@ struct ParserContext {
     new_block_entered: bool,
     /// Current table row number (reset when exiting table)
     table_row: usize,
+    /// Current table cell index within the row (0-indexed)
+    table_cell_index: usize,
+    /// Total number of cells in the current row
+    table_cell_count: usize,
+    /// Whether the current cell is the last in the row (for timing)
+    is_last_table_cell: bool,
     /// Whether the current blockquote is a callout
     in_callout: bool,
     /// Whether we're inside inline code (preserves whitespace)
@@ -76,6 +82,9 @@ impl ParserContext {
             skip_depth: 0,
             new_block_entered: false,
             table_row: 0,
+            table_cell_index: 0,
+            table_cell_count: 0,
+            is_last_table_cell: false,
             in_callout: false,
             in_inline_code: false,
         }
@@ -132,15 +141,64 @@ impl ParserContext {
 
 /// Split text into words, respecting Unicode boundaries.
 /// Em-dashes (—) and en-dashes (–) are treated as word separators.
+/// Hyphenated words are split when portions are more than 3 characters long,
+/// keeping the hyphen on the tail of the preceding portion.
 fn split_into_words(text: &str) -> Vec<String> {
     text.split_whitespace()
         .flat_map(|part| {
             // Split on em-dash (—) and en-dash (–) as word separators
             part.split(['—', '–'])
         })
+        .flat_map(|part| {
+            // Handle hyphenated words
+            if part.contains('-') {
+                split_hyphenated_word(&part)
+            } else {
+                vec![part.to_string()]
+            }
+        })
         .filter(|w| !w.is_empty())
-        .map(String::from)
         .collect()
+}
+
+/// Split hyphenated words when portions are > 3 characters.
+/// Returns the split portions, keeping hyphens on the tail of preceding portions.
+///
+/// Examples:
+/// - "well-known" → ["well-", "known"] (both > 3 chars)
+/// - "co-op" → ["co-op"] (portions ≤ 3 chars, keep together)
+/// - "mother-in-law" → ["mother-", "in-", "law"] (all > 3 except last)
+fn split_hyphenated_word(word: &str) -> Vec<String> {
+    let portions: Vec<&str> = word.split('-').collect();
+
+    // If no hyphens or single portion, return as-is
+    if portions.len() < 2 {
+        return vec![word.to_string()];
+    }
+
+    // Check if any portion is > 3 chars
+    let has_long_portion = portions.iter().any(|p| p.chars().count() > 3);
+
+    // If all portions are ≤ 3 chars, keep the whole word together
+    if !has_long_portion {
+        return vec![word.to_string()];
+    }
+
+    // Split into individual portions, keeping hyphens on tails
+    let mut result = Vec::new();
+    for (i, portion) in portions.iter().enumerate() {
+        let is_last = i == portions.len() - 1;
+
+        if is_last {
+            // Last portion never gets a trailing hyphen
+            result.push(portion.to_string());
+        } else {
+            // All other portions keep their trailing hyphen
+            result.push(format!("{}-", portion));
+        }
+    }
+
+    result
 }
 
 /// Detect callout type from text like "[!folder]" or "[!note]"
@@ -308,15 +366,27 @@ fn enter_node(
         ctx.push_block(BlockContext::ListItem(ctx.list_depth));
         restore_block = true;
     } else if node.is::<Table>() {
-        // Reset row counter when entering a table
+        // Reset counters when entering a table
         ctx.table_row = 0;
+        ctx.table_cell_index = 0;
+        ctx.table_cell_count = 0;
+        ctx.is_last_table_cell = false;
     } else if node.is::<TableRow>() {
         // Increment row counter for each row
         ctx.table_row += 1;
+        // Reset cell index for new row and count total cells
+        ctx.table_cell_index = 0;
+        ctx.table_cell_count = node.children.iter().filter(|c| c.is::<TableCell>()).count();
     } else if node.is::<TableCell>() {
+        // Check if this is the last cell in the row
+        ctx.is_last_table_cell = ctx.table_cell_index == ctx.table_cell_count - 1;
+
         // Each cell is a distinct block for timing and rendering
         ctx.push_block(BlockContext::TableCell(ctx.table_row));
         restore_block = true;
+
+        // Move to next cell
+        ctx.table_cell_index += 1;
     }
 
     // Handle inline-level styling elements
@@ -356,7 +426,12 @@ fn enter_node(
                 // First word of a new block gets the new_block timing modifier
                 let is_new_block = ctx.new_block_entered || tokens.is_empty();
 
-                let timing_hint = generate_timing_hint(&word, is_paragraph_end, is_new_block);
+                let timing_hint = generate_timing_hint(
+                    &word,
+                    is_paragraph_end,
+                    is_new_block,
+                    ctx.is_last_table_cell,
+                );
 
                 tokens.push(Token {
                     word,
@@ -452,12 +527,33 @@ mod tests {
     }
 
     #[test]
-    fn test_hyphenated_words_preserved() {
+    fn test_hyphenated_words_split_when_long() {
         let parser = MarkdownParser::new();
         let result = parser.parse_str("This is well-known text").unwrap();
-        // "well-known" should be preserved as a single word
+        // "well-known" should be split into "well-" and "known" (both > 3 chars)
+        assert_eq!(result.tokens.len(), 5);
+        assert_eq!(result.tokens[2].word, "well-");
+        assert_eq!(result.tokens[3].word, "known");
+    }
+
+    #[test]
+    fn test_short_hyphenated_words_preserved() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("This is co-op text").unwrap();
+        // "co-op" should be preserved as single word (portions ≤ 3 chars)
         assert_eq!(result.tokens.len(), 4);
-        assert_eq!(result.tokens[2].word, "well-known");
+        assert_eq!(result.tokens[2].word, "co-op");
+    }
+
+    #[test]
+    fn test_multiple_hyphens_split() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("Check mother-in-law").unwrap();
+        // "mother-in-law" → "mother-", "in-", "law"
+        assert_eq!(result.tokens.len(), 4);
+        assert_eq!(result.tokens[1].word, "mother-");
+        assert_eq!(result.tokens[2].word, "in-");
+        assert_eq!(result.tokens[3].word, "law");
     }
 
     #[test]
