@@ -97,3 +97,52 @@ fn test_snapshot_quote() {
 
     assert_debug_snapshot!(result.tokens);
 }
+
+#[test]
+fn test_parse_callout_with_folder_emoji() {
+    let parser = MarkdownParser::new();
+    let result = parser
+        .parse_str("> [!folder] File: example.txt")
+        .unwrap();
+
+    // Should parse as Callout with folder type
+    assert!(!result.tokens.is_empty());
+    if let rsvp_term::types::BlockContext::Callout(callout_type) = &result.tokens[0].block {
+        assert_eq!(callout_type, "folder");
+    } else {
+        panic!("Expected Callout block context, got {:?}", result.tokens[0].block);
+    }
+}
+
+#[test]
+fn test_inline_code_with_underscores_preserved() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("Use `my_variable_name` for x").unwrap();
+
+    // Code with underscores should be preserved as a single word
+    assert_eq!(result.tokens.len(), 4);
+    assert_eq!(result.tokens[1].word, "my_variable_name");
+    assert_eq!(result.tokens[1].style, rsvp_term::types::TokenStyle::Code);
+}
+
+#[test]
+fn test_inline_code_with_hyphens_preserved() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("Use `my-function-name` for x").unwrap();
+
+    // Code with hyphens should be preserved as a single word
+    assert_eq!(result.tokens.len(), 4);
+    assert_eq!(result.tokens[1].word, "my-function-name");
+    assert_eq!(result.tokens[1].style, rsvp_term::types::TokenStyle::Code);
+}
+
+#[test]
+fn test_inline_code_with_multiple_words_preserved() {
+    let parser = MarkdownParser::new();
+    let result = parser.parse_str("Use `my function name` for x").unwrap();
+
+    // Inline code with multiple words should NOT be split
+    assert_eq!(result.tokens.len(), 4);
+    assert_eq!(result.tokens[1].word, "my function name");
+    assert_eq!(result.tokens[1].style, rsvp_term::types::TokenStyle::Code);
+}

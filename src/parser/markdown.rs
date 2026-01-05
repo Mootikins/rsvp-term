@@ -60,6 +60,10 @@ struct ParserContext {
     new_block_entered: bool,
     /// Current table row number (reset when exiting table)
     table_row: usize,
+    /// Whether the current blockquote is a callout
+    in_callout: bool,
+    /// Whether we're inside inline code (preserves whitespace)
+    in_inline_code: bool,
 }
 
 impl ParserContext {
@@ -72,6 +76,8 @@ impl ParserContext {
             skip_depth: 0,
             new_block_entered: false,
             table_row: 0,
+            in_callout: false,
+            in_inline_code: false,
         }
     }
 
@@ -125,11 +131,29 @@ impl ParserContext {
 }
 
 /// Split text into words, respecting Unicode boundaries.
+/// Em-dashes (—) and en-dashes (–) are treated as word separators.
 fn split_into_words(text: &str) -> Vec<String> {
     text.split_whitespace()
+        .flat_map(|part| {
+            // Split on em-dash (—) and en-dash (–) as word separators
+            part.split(['—', '–'])
+        })
         .filter(|w| !w.is_empty())
         .map(String::from)
         .collect()
+}
+
+/// Detect callout type from text like "[!folder]" or "[!note]"
+/// Returns Some(callout_type) if found, None otherwise
+fn detect_callout_type(text: &str) -> Option<String> {
+    let trimmed = text.trim();
+    if trimmed.starts_with("[!") {
+        if let Some(end_pos) = trimmed.find(']') {
+            let callout_type = trimmed[2..end_pos].to_lowercase();
+            return Some(callout_type);
+        }
+    }
+    None
 }
 
 impl DocumentParser for MarkdownParser {
@@ -179,6 +203,7 @@ fn walk_ast(
     // Handle exiting (restore context)
     if restore_style {
         ctx.pop_style();
+        ctx.in_inline_code = false;
     }
     if restore_block {
         ctx.pop_block();
@@ -191,6 +216,7 @@ fn walk_ast(
     }
     if restore_quote_depth {
         ctx.quote_depth = ctx.quote_depth.saturating_sub(1);
+        ctx.in_callout = false;
     }
 }
 
@@ -238,11 +264,41 @@ fn enter_node(
             });
         }
     } else if node.is::<Paragraph>() {
-        ctx.push_block(BlockContext::Paragraph);
-        restore_block = true;
+        // Don't push paragraph context if inside a callout (use callout context instead)
+        if !ctx.in_callout {
+            ctx.push_block(BlockContext::Paragraph);
+            restore_block = true;
+        }
     } else if node.is::<Blockquote>() {
         ctx.quote_depth += 1;
-        ctx.push_block(BlockContext::Quote(ctx.quote_depth));
+
+        // Check if this is a callout (e.g., "[!folder]", "[!note]")
+        // We need to look at paragraph text nodes inside the blockquote
+        let mut callout_type: Option<String> = None;
+        for child in &node.children {
+            // Check if this is a paragraph with callout syntax
+            if child.is::<Paragraph>() {
+                for grandchild in &child.children {
+                    if let Some(text) = grandchild.cast::<Text>() {
+                        callout_type = detect_callout_type(&text.content);
+                        if callout_type.is_some() {
+                            break;
+                        }
+                    }
+                }
+            }
+            if callout_type.is_some() {
+                break;
+            }
+        }
+
+        if let Some(ct) = callout_type {
+            ctx.in_callout = true;
+            ctx.push_block(BlockContext::Callout(ct));
+        } else {
+            ctx.in_callout = false;
+            ctx.push_block(BlockContext::Quote(ctx.quote_depth));
+        }
         restore_block = true;
         restore_quote_depth = true;
     } else if node.is::<BulletList>() || node.is::<OrderedList>() {
@@ -271,6 +327,7 @@ fn enter_node(
         ctx.push_style(TokenStyle::Italic);
         restore_style = true;
     } else if node.is::<CodeInline>() {
+        ctx.in_inline_code = true;
         ctx.push_style(TokenStyle::Code);
         restore_style = true;
     } else if node.is::<Link>() {
@@ -283,7 +340,12 @@ fn enter_node(
     // Handle text nodes - extract words
     if let Some(text) = node.cast::<Text>() {
         if !ctx.should_skip() {
-            let words = split_into_words(&text.content);
+            // If inside inline code, preserve the entire text as a single token
+            let words = if ctx.in_inline_code {
+                vec![text.content.clone()]
+            } else {
+                split_into_words(&text.content)
+            };
             let word_count = words.len();
 
             for (i, word) in words.into_iter().enumerate() {
@@ -387,5 +449,24 @@ mod tests {
                 assert_eq!(*depth, 1, "Quote depth should be 1, not cumulative");
             }
         }
+    }
+
+    #[test]
+    fn test_hyphenated_words_preserved() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("This is well-known text").unwrap();
+        // "well-known" should be preserved as a single word
+        assert_eq!(result.tokens.len(), 4);
+        assert_eq!(result.tokens[2].word, "well-known");
+    }
+
+    #[test]
+    fn test_em_dash_separates_words() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("Hello—world").unwrap();
+        // Em-dash should separate words
+        assert_eq!(result.tokens.len(), 2);
+        assert_eq!(result.tokens[0].word, "Hello");
+        assert_eq!(result.tokens[1].word, "world");
     }
 }
