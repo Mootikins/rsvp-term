@@ -1,5 +1,8 @@
 use crate::app::App;
-use crate::types::{BlockContext, TokenStyle};
+use crate::types::TokenStyle;
+use crate::ui::common::{
+    fade_char_left, BRIGHTNESS_SOLID_END, FADE_TOTAL, GUIDE_COLOR,
+};
 use crate::ui::GUTTER_WIDTH;
 use ratatui::{
     layout::Rect,
@@ -8,34 +11,6 @@ use ratatui::{
     widgets::Paragraph,
     Frame,
 };
-
-/// Guide line color - slightly lighter than context text
-const GUIDE_COLOR: Color = Color::Rgb(120, 120, 120);
-
-
-/// Fade zone characters: dotted (2) + dashed (2) + solid fade (2)
-const FADE_DOTTED: usize = 2;
-const FADE_DASHED: usize = 2;
-const FADE_SOLID: usize = 2;
-const FADE_TOTAL: usize = FADE_DOTTED + FADE_DASHED + FADE_SOLID;
-
-/// Get hint characters for a block context
-fn current_block_hint(block: &BlockContext) -> &'static str {
-    match block {
-        BlockContext::Heading(1) => "#",
-        BlockContext::Heading(2) => "##",
-        BlockContext::Heading(3) => "###",
-        BlockContext::Heading(4) => "####",
-        BlockContext::Heading(5) => "#####",
-        BlockContext::Heading(6) => "######",
-        BlockContext::Heading(_) => "#",
-        BlockContext::ListItem(_) => "-",
-        BlockContext::Quote(_) => ">",
-        BlockContext::TableCell(_) => "|",
-        BlockContext::Callout(_) => "[!]",
-        BlockContext::Paragraph => "",
-    }
-}
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect>) {
     let Some(token) = app.current_token() else {
@@ -143,7 +118,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect
         let gutter_style = Style::default().fg(GUIDE_COLOR);
 
         // Current block hint at word line
-        let block_hint = current_block_hint(&token.token.block);
+        let block_hint = token.token.block.hint_chars();
         if !block_hint.is_empty() {
             let hint_text = format!("{:>width$}", block_hint, width = GUTTER_WIDTH as usize);
             let hint_para = Paragraph::new(Line::from(Span::styled(hint_text, gutter_style)));
@@ -212,23 +187,10 @@ fn build_faded_guide_line<'a>(width: usize, tick_pos: usize, tick_char: char) ->
     let fade_end = FADE_TOTAL.min(width);
 
     for i in 0..width {
-        let (c, brightness) = if i < FADE_DOTTED.min(fade_end) {
-            // Dotted zone (dimmest): ┄
-            let b = 40 + (i * 20 / FADE_DOTTED.max(1)) as u8;
-            ('┄', b)
-        } else if i < (FADE_DOTTED + FADE_DASHED).min(fade_end) {
-            // Dashed zone (medium): ╌
-            let progress = i - FADE_DOTTED;
-            let b = 60 + (progress * 20 / FADE_DASHED.max(1)) as u8;
-            ('╌', b)
-        } else if i < fade_end {
-            // Solid fade zone (brightening): ─
-            let progress = i - FADE_DOTTED - FADE_DASHED;
-            let b = 80 + (progress * 40 / FADE_SOLID.max(1)) as u8;
-            ('─', b)
+        let (c, brightness) = if i < fade_end {
+            fade_char_left(i)
         } else {
-            // Full brightness solid
-            ('─', 120)
+            ('─', BRIGHTNESS_SOLID_END)
         };
 
         // Use tick char at tick position

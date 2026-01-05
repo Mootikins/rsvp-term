@@ -49,6 +49,27 @@ pub enum BlockContext {
     TableCell(usize), // table cell with row number (0-indexed)
 }
 
+impl BlockContext {
+    /// Returns the hint characters for display in the gutter
+    #[must_use]
+    pub fn hint_chars(&self) -> &'static str {
+        match self {
+            BlockContext::Heading(1) => "#",
+            BlockContext::Heading(2) => "##",
+            BlockContext::Heading(3) => "###",
+            BlockContext::Heading(4) => "####",
+            BlockContext::Heading(5) => "#####",
+            BlockContext::Heading(6) => "######",
+            BlockContext::Heading(_) => "#",
+            BlockContext::ListItem(_) => "-",
+            BlockContext::Quote(_) => ">",
+            BlockContext::TableCell(_) => "|",
+            BlockContext::Callout(_) => "[!]",
+            BlockContext::Paragraph => "",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TimingHint {
     pub word_length_modifier: i32,

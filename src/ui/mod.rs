@@ -1,3 +1,4 @@
+pub mod common;
 pub mod context;
 pub mod help;
 pub mod outline;

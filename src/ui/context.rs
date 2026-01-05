@@ -1,5 +1,6 @@
 use crate::app::App;
 use crate::types::{BlockContext, TimedToken, TokenStyle};
+use crate::ui::common::{calculate_padding, GUIDE_COLOR, MIN_PADDING};
 use crate::ui::GUTTER_WIDTH;
 use ratatui::{
     layout::Rect,
@@ -8,15 +9,6 @@ use ratatui::{
     widgets::Paragraph,
     Frame,
 };
-
-/// Minimum left padding for context lines
-const MIN_PADDING: usize = 2;
-
-/// Threshold for centering: if content uses less than this fraction of width, center it
-const CENTER_THRESHOLD: f32 = 0.6;
-
-/// Gutter hint color - same as guide line color
-const GUTTER_COLOR: Color = Color::Rgb(120, 120, 120);
 
 /// Render context above the RSVP word
 pub fn render_before(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect>) {
@@ -233,23 +225,6 @@ fn calculate_line_width(line: &DocLine) -> usize {
     width
 }
 
-/// Calculate left padding for a line - centers headings only, left-aligns others
-fn calculate_padding(content_width: usize, available_width: usize, block: &BlockContext) -> usize {
-    // Only center headings
-    let should_center = matches!(block, BlockContext::Heading(_));
-
-    if should_center {
-        let ratio = content_width as f32 / available_width as f32;
-        if ratio < CENTER_THRESHOLD {
-            // Center the content
-            return (available_width.saturating_sub(content_width)) / 2;
-        }
-    }
-
-    // Left-align with minimum padding
-    MIN_PADDING
-}
-
 /// Get block prefix for visual indication
 const fn block_prefix(block: &BlockContext) -> &'static str {
     match block {
@@ -395,9 +370,9 @@ fn render_line(
 
     // Render gutter hint if enabled
     if let Some(gutter) = gutter_area {
-        let hint = block_hint_chars(&first_token.token.block);
+        let hint = first_token.token.block.hint_chars();
         if !hint.is_empty() {
-            let gutter_style = Style::default().fg(GUTTER_COLOR);
+            let gutter_style = Style::default().fg(GUIDE_COLOR);
             let hint_text = format!("{:>width$}", hint, width = GUTTER_WIDTH as usize);
             let hint_para = Paragraph::new(Line::from(Span::styled(hint_text, gutter_style)));
             let hint_area = Rect {
@@ -412,7 +387,8 @@ fn render_line(
 
     // Calculate padding - only center headings, left-align others
     let content_width = calculate_line_width(line);
-    let padding_size = calculate_padding(content_width, width as usize, &first_token.token.block);
+    let should_center = matches!(&first_token.token.block, BlockContext::Heading(_));
+    let padding_size = calculate_padding(content_width, width as usize, should_center);
     let padding = " ".repeat(padding_size);
     let mut spans = vec![Span::raw(padding), Span::styled(prefix, style)];
 
@@ -512,24 +488,6 @@ fn render_line(
     frame.render_widget(Paragraph::new(Line::from(spans)), line_area);
 }
 
-/// Get hint characters for a block context (for gutter display)
-fn block_hint_chars(block: &BlockContext) -> &'static str {
-    match block {
-        BlockContext::Heading(1) => "#",
-        BlockContext::Heading(2) => "##",
-        BlockContext::Heading(3) => "###",
-        BlockContext::Heading(4) => "####",
-        BlockContext::Heading(5) => "#####",
-        BlockContext::Heading(6) => "######",
-        BlockContext::Heading(_) => "#",
-        BlockContext::ListItem(_) => "-",
-        BlockContext::Quote(_) => ">",
-        BlockContext::TableCell(_) => "|",
-        BlockContext::Callout(_) => "[!]",
-        BlockContext::Paragraph => "",
-    }
-}
-
 #[derive(Clone, Copy)]
 enum ContextType {
     Before,
@@ -542,8 +500,8 @@ mod tests {
 
     #[test]
     fn test_heading_short_line_centered() {
-        // Headings should be centered
-        let padding = calculate_padding(20, 80, &BlockContext::Heading(1));
+        // Headings should be centered (center=true)
+        let padding = calculate_padding(20, 80, true);
         // Should center: (80 - 20) / 2 = 30
         assert_eq!(padding, 30);
     }
@@ -551,35 +509,35 @@ mod tests {
     #[test]
     fn test_heading_long_line_left_aligned() {
         // Long heading still gets left-aligned (above threshold)
-        let padding = calculate_padding(60, 80, &BlockContext::Heading(1));
+        let padding = calculate_padding(60, 80, true);
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
     fn test_paragraph_always_left_aligned() {
-        // Paragraphs should always be left-aligned, even short ones
-        let padding = calculate_padding(20, 80, &BlockContext::Paragraph);
+        // Paragraphs should always be left-aligned (center=false)
+        let padding = calculate_padding(20, 80, false);
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
     fn test_list_item_left_aligned() {
         // List items should be left-aligned
-        let padding = calculate_padding(20, 80, &BlockContext::ListItem(1));
+        let padding = calculate_padding(20, 80, false);
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
     fn test_table_cell_left_aligned() {
         // Table cells should be left-aligned
-        let padding = calculate_padding(20, 80, &BlockContext::TableCell(0));
+        let padding = calculate_padding(20, 80, false);
         assert_eq!(padding, MIN_PADDING);
     }
 
     #[test]
     fn test_heading_empty_content() {
         // Edge case: empty heading
-        let padding = calculate_padding(0, 80, &BlockContext::Heading(2));
+        let padding = calculate_padding(0, 80, true);
         // Should center at 40
         assert_eq!(padding, 40);
     }

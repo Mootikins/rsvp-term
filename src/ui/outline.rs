@@ -1,4 +1,7 @@
 use crate::app::App;
+use crate::ui::common::{
+    calculate_padding, fade_char_left, BRIGHTNESS_SOLID_END, FADE_TOTAL, GUIDE_COLOR,
+};
 use ratatui::{
     layout::Rect,
     style::{Color, Modifier, Style},
@@ -6,21 +9,6 @@ use ratatui::{
     widgets::Paragraph,
     Frame,
 };
-
-/// Minimum left padding for outline items
-const MIN_PADDING: usize = 2;
-
-/// Threshold for centering: if content uses less than this fraction of width, center it
-const CENTER_THRESHOLD: f32 = 0.6;
-
-/// Guide line color
-const GUIDE_COLOR: Color = Color::Rgb(120, 120, 120);
-
-/// Fade zone: dotted (2) + dashed (2) + solid fade (2) on each side
-const FADE_DOTTED: usize = 2;
-const FADE_DASHED: usize = 2;
-const FADE_SOLID: usize = 2;
-const FADE_TOTAL: usize = FADE_DOTTED + FADE_DASHED + FADE_SOLID;
 
 pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let sections = app.sections();
@@ -42,7 +30,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let selected_section = &sections[selected];
     let hint = "#".repeat(selected_section.level as usize);
     let title_width = selected_section.title.chars().count();
-    let title_padding = calculate_padding(title_width, area.width as usize);
+    let title_padding = calculate_padding(title_width, area.width as usize, true);
     let tick_pos = title_padding + title_width / 2;
 
     // Render top guide bar
@@ -139,7 +127,7 @@ fn render_item(frame: &mut Frame, section: &crate::types::Section, x: u16, y: u1
     let style = Style::default().fg(gray);
 
     let content_width = section.title.chars().count();
-    let padding = calculate_padding(content_width, width as usize);
+    let padding = calculate_padding(content_width, width as usize, true);
     let text = format!("{}{}", " ".repeat(padding), section.title);
 
     let para = Paragraph::new(Line::from(Span::styled(text, style)));
@@ -152,21 +140,6 @@ fn render_item(frame: &mut Frame, section: &crate::types::Section, x: u16, y: u1
             height: 1,
         },
     );
-}
-
-/// Calculate left padding for a line - centers short lines, left-aligns long ones
-fn calculate_padding(content_width: usize, available_width: usize) -> usize {
-    if available_width == 0 {
-        return MIN_PADDING;
-    }
-    let ratio = content_width as f32 / available_width as f32;
-
-    if ratio < CENTER_THRESHOLD {
-        (available_width.saturating_sub(content_width)) / 2
-    } else {
-        MIN_PADDING
-    }
-    .max(MIN_PADDING)
 }
 
 /// Build a guide line with fade effect on both sides
@@ -194,36 +167,14 @@ fn build_faded_guide_line<'a>(
         let (c, brightness) = if i < fade_end_left {
             // Left fade zone
             let progress = i - start_col;
-            if progress < FADE_DOTTED {
-                let b = 40 + (progress * 20 / FADE_DOTTED.max(1)) as u8;
-                ('┄', b)
-            } else if progress < FADE_DOTTED + FADE_DASHED {
-                let p = progress - FADE_DOTTED;
-                let b = 60 + (p * 20 / FADE_DASHED.max(1)) as u8;
-                ('╌', b)
-            } else {
-                let p = progress - FADE_DOTTED - FADE_DASHED;
-                let b = 80 + (p * 40 / FADE_SOLID.max(1)) as u8;
-                ('─', b)
-            }
+            fade_char_left(progress)
         } else if i >= fade_start_right {
             // Right fade zone (mirror of left)
             let progress = width - 1 - i;
-            if progress < FADE_DOTTED {
-                let b = 40 + (progress * 20 / FADE_DOTTED.max(1)) as u8;
-                ('┄', b)
-            } else if progress < FADE_DOTTED + FADE_DASHED {
-                let p = progress - FADE_DOTTED;
-                let b = 60 + (p * 20 / FADE_DASHED.max(1)) as u8;
-                ('╌', b)
-            } else {
-                let p = progress - FADE_DOTTED - FADE_DASHED;
-                let b = 80 + (p * 40 / FADE_SOLID.max(1)) as u8;
-                ('─', b)
-            }
+            fade_char_left(progress)
         } else {
             // Full brightness solid middle
-            ('─', 120)
+            ('─', BRIGHTNESS_SOLID_END)
         };
 
         let display_char = if i == tick_pos { tick_char } else { c };
