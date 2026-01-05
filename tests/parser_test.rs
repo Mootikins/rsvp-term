@@ -209,3 +209,42 @@ fn test_table_last_column_longer_pause() {
         col1_tokens[0].timing_hint.structure_modifier
     );
 }
+
+#[test]
+fn test_keybind_table_cell_boundaries() {
+    // Test a keybind-style table with 2 columns where second column has multiple words
+    let parser = MarkdownParser::new();
+    let result = parser
+        .parse_str(
+            "| Key | Action |\n|-----|--------|\n| `j` | Move down |",
+        )
+        .unwrap();
+
+    // Find all tokens and check is_cell_start
+    let cell_starts: Vec<_> = result
+        .tokens
+        .iter()
+        .filter(|t| t.timing_hint.is_cell_start)
+        .collect();
+
+    // Should have exactly 4 cell starts: Key, Action, j, Move
+    // (first word of each cell in both rows)
+    assert_eq!(
+        cell_starts.len(),
+        4,
+        "Expected 4 cell starts, got {}: {:?}",
+        cell_starts.len(),
+        cell_starts.iter().map(|t| &t.word).collect::<Vec<_>>()
+    );
+
+    // "down" should NOT be a cell start (it's the second word in the "Move down" cell)
+    let down_token = result.tokens.iter().find(|t| t.word == "down");
+    assert!(
+        down_token.is_some(),
+        "Should have 'down' token"
+    );
+    assert!(
+        !down_token.unwrap().timing_hint.is_cell_start,
+        "'down' should not be a cell start"
+    );
+}
