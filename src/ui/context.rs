@@ -229,7 +229,7 @@ fn calculate_line_width(line: &DocLine) -> usize {
 /// Get block prefix for visual indication
 const fn block_prefix(block: &BlockContext) -> &'static str {
     match block {
-        BlockContext::ListItem(_) => "",
+        BlockContext::ListItem(_) => "- ",
         BlockContext::Quote(_) | BlockContext::TableCell(_) => "| ",
         BlockContext::Heading(_) | BlockContext::Paragraph => "",
         BlockContext::Callout(_) => "[i] ",
