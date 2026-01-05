@@ -239,9 +239,9 @@ const fn block_prefix(block: &BlockContext) -> &'static str {
 /// Get line prefix - only show list prefix on first line of list item
 fn line_prefix(token: &TimedToken) -> &'static str {
     match &token.token.block {
-        // Only show - for first line of list item (not continuation lines)
+        // Only show - for first line of list item, indent continuation lines
         BlockContext::ListItem(_) if token.token.timing_hint.is_block_start => "- ",
-        BlockContext::ListItem(_) => "",
+        BlockContext::ListItem(_) => "  ", // Align with text after "- "
         other => block_prefix(other),
     }
 }
