@@ -54,11 +54,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
         let style = Style::default()
             .fg(Color::Rgb(200, 200, 200))
             .add_modifier(Modifier::BOLD);
-        let text = format!(
-            "{}{}",
-            " ".repeat(title_padding),
-            selected_section.title
-        );
+        let text = format!("{}{}", " ".repeat(title_padding), selected_section.title);
         let para = Paragraph::new(Line::from(Span::styled(text, style)));
         frame.render_widget(
             para,
@@ -93,7 +89,14 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let mut distance = 1usize;
     while above_idx < sections.len() && above_y < area.height {
         let section = &sections[above_idx];
-        render_item(frame, section, area.x, area.y + above_y, area.width, distance);
+        render_item(
+            frame,
+            section,
+            area.x,
+            area.y + above_y,
+            area.width,
+            distance,
+        );
 
         if above_idx == 0 || above_y == 0 {
             break;
@@ -109,7 +112,14 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     let mut distance = 1usize;
     while below_idx < sections.len() && below_y < area.height {
         let section = &sections[below_idx];
-        render_item(frame, section, area.x, area.y + below_y, area.width, distance);
+        render_item(
+            frame,
+            section,
+            area.x,
+            area.y + below_y,
+            area.width,
+            distance,
+        );
 
         below_idx += 1;
         below_y += 1;
@@ -117,7 +127,14 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect) {
     }
 }
 
-fn render_item(frame: &mut Frame, section: &crate::types::Section, x: u16, y: u16, width: u16, distance: usize) {
+fn render_item(
+    frame: &mut Frame,
+    section: &crate::types::Section,
+    x: u16,
+    y: u16,
+    width: u16,
+    distance: usize,
+) {
     let gray = match distance {
         1 => Color::Rgb(150, 150, 150),
         2 => Color::Rgb(110, 110, 110),

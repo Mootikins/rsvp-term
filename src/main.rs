@@ -132,7 +132,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Main loop
     let mut last_advance = Instant::now();
-    let mut word_timings: Vec<(usize, String, u64)> = Vec::new(); // (pos, word, duration_ms)
 
     loop {
         // Render
@@ -202,14 +201,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             && app.view_mode() == ViewMode::Reading
             && last_advance.elapsed() >= next_duration
         {
-            // Log word timing
-            if let Some(token) = app.current_token() {
-                word_timings.push((
-                    app.position(),
-                    token.token.word.clone(),
-                    next_duration.as_millis() as u64,
-                ));
-            }
             app.advance();
             last_advance = Instant::now();
         }
@@ -218,35 +209,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Cleanup
     disable_raw_mode()?;
     stdout().execute(LeaveAlternateScreen)?;
-
-    // Output word timing analysis
-    if !word_timings.is_empty() {
-        // Group by position ranges and compute averages
-        let mut by_percent: std::collections::HashMap<usize, Vec<u64>> = std::collections::HashMap::new();
-        let max_pos = word_timings.iter().map(|(p, _, _)| *p).max().unwrap_or(1);
-        for (pos, _, duration) in &word_timings {
-            let pct = if max_pos > 0 { pos * 10 / max_pos } else { 0 };
-            by_percent.entry(pct).or_default().push(*duration);
-        }
-
-        println!("\nWord duration by position (at {} WPM):", app.wpm());
-        for pct in 0..=10 {
-            if let Some(times) = by_percent.get(&pct) {
-                let avg = times.iter().sum::<u64>() / times.len() as u64;
-                let max = times.iter().max().unwrap_or(&0);
-                println!("  {:>3}%: avg {:>4}ms, max {:>4}ms ({} words)",
-                    pct * 10, avg, max, times.len());
-            }
-        }
-
-        // Show slowest words
-        let mut sorted = word_timings.clone();
-        sorted.sort_by(|a, b| b.2.cmp(&a.2));
-        println!("\nSlowest words:");
-        for (pos, word, duration) in sorted.iter().take(10) {
-            println!("  {:>4}ms: {:20} (pos {})", duration, word, pos);
-        }
-    }
 
     Ok(())
 }

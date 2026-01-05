@@ -101,16 +101,17 @@ fn test_snapshot_quote() {
 #[test]
 fn test_parse_callout_with_folder_emoji() {
     let parser = MarkdownParser::new();
-    let result = parser
-        .parse_str("> [!folder] File: example.txt")
-        .unwrap();
+    let result = parser.parse_str("> [!folder] File: example.txt").unwrap();
 
     // Should parse as Callout with folder type
     assert!(!result.tokens.is_empty());
     if let rsvp_term::types::BlockContext::Callout(callout_type) = &result.tokens[0].block {
         assert_eq!(callout_type, "folder");
     } else {
-        panic!("Expected Callout block context, got {:?}", result.tokens[0].block);
+        panic!(
+            "Expected Callout block context, got {:?}",
+            result.tokens[0].block
+        );
     }
 }
 
@@ -181,9 +182,7 @@ fn test_multiple_hyphens_split() {
 fn test_table_last_column_longer_pause() {
     let parser = MarkdownParser::new();
     let result = parser
-        .parse_str(
-            "| Col1 | Col2 | Col3 |\n|------|------|------|\n| Data | Data | Data |",
-        )
+        .parse_str("| Col1 | Col2 | Col3 |\n|------|------|------|\n| Data | Data | Data |")
         .unwrap();
 
     // Find tokens from each column
@@ -194,16 +193,14 @@ fn test_table_last_column_longer_pause() {
         .take(2)
         .collect();
 
-    let col3_tokens: Vec<_> = result
-        .tokens
-        .iter()
-        .filter(|t| t.word == "Col3")
-        .collect();
+    let col3_tokens: Vec<_> = result.tokens.iter().filter(|t| t.word == "Col3").collect();
 
     // Column 3 tokens should have longer structure modifier than column 1
     // Column 1: structure_modifier should be 150 (standard new cell)
     // Column 3: structure_modifier should be > 150 (last cell special handling)
-    assert!(col3_tokens[0].timing_hint.structure_modifier > col1_tokens[0].timing_hint.structure_modifier,
+    assert!(
+        col3_tokens[0].timing_hint.structure_modifier
+            > col1_tokens[0].timing_hint.structure_modifier,
         "Last column should have longer pause: col3={:?} vs col1={:?}",
         col3_tokens[0].timing_hint.structure_modifier,
         col1_tokens[0].timing_hint.structure_modifier
@@ -215,9 +212,7 @@ fn test_keybind_table_cell_boundaries() {
     // Test a keybind-style table with 2 columns where second column has multiple words
     let parser = MarkdownParser::new();
     let result = parser
-        .parse_str(
-            "| Key | Action |\n|-----|--------|\n| `j` | Move down |",
-        )
+        .parse_str("| Key | Action |\n|-----|--------|\n| `j` | Move down |")
         .unwrap();
 
     // Find all tokens and check is_cell_start
@@ -239,10 +234,7 @@ fn test_keybind_table_cell_boundaries() {
 
     // "down" should NOT be a cell start (it's the second word in the "Move down" cell)
     let down_token = result.tokens.iter().find(|t| t.word == "down");
-    assert!(
-        down_token.is_some(),
-        "Should have 'down' token"
-    );
+    assert!(down_token.is_some(), "Should have 'down' token");
     assert!(
         !down_token.unwrap().timing_hint.is_cell_start,
         "'down' should not be a cell start"

@@ -1,9 +1,9 @@
+use rsvp_term::app::App;
+use rsvp_term::orp::calculate_orp;
 use rsvp_term::parser::{DocumentParser, MarkdownParser};
 use rsvp_term::timing::calculate_duration;
-use rsvp_term::orp::calculate_orp;
 use rsvp_term::types::TimedToken;
-use rsvp_term::app::App;
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
 fn create_large_document() -> String {
     let mut doc = String::new();
@@ -28,7 +28,8 @@ fn test_render_performance_at_positions() {
     let doc = parser.parse_str(&markdown).unwrap();
 
     let wpm = 300u16;
-    let timed_tokens: Vec<TimedToken> = doc.tokens
+    let timed_tokens: Vec<TimedToken> = doc
+        .tokens
         .into_iter()
         .map(|token| {
             let duration = calculate_duration(&token, wpm);
@@ -47,13 +48,7 @@ fn test_render_performance_at_positions() {
 
     // Test positions: start, 25%, 50%, 75%, near end
     let total = app.tokens().len();
-    let test_positions = [
-        0,
-        total / 4,
-        total / 2,
-        total * 3 / 4,
-        total - 100,
-    ];
+    let test_positions = [0, total / 4, total / 2, total * 3 / 4, total - 100];
 
     // Simulate what compute_document_lines does
     for &pos in &test_positions {
@@ -105,7 +100,8 @@ fn test_actual_timing_at_positions() {
     let doc = parser.parse_str(&markdown).unwrap();
 
     let wpm = 300u16;
-    let timed_tokens: Vec<TimedToken> = doc.tokens
+    let timed_tokens: Vec<TimedToken> = doc
+        .tokens
         .into_iter()
         .map(|token| {
             let duration = calculate_duration(&token, wpm);
@@ -169,7 +165,8 @@ fn test_skip_vs_slice_performance() {
     let doc = parser.parse_str(&markdown).unwrap();
 
     let wpm = 300u16;
-    let timed_tokens: Vec<TimedToken> = doc.tokens
+    let timed_tokens: Vec<TimedToken> = doc
+        .tokens
         .into_iter()
         .map(|token| {
             let duration = calculate_duration(&token, wpm);
@@ -183,7 +180,10 @@ fn test_skip_vs_slice_performance() {
         .collect();
 
     let total = timed_tokens.len();
-    println!("\nComparing skip() vs slice indexing at position {}", total - 100);
+    println!(
+        "\nComparing skip() vs slice indexing at position {}",
+        total - 100
+    );
 
     let pos = total - 100;
     let start = pos.saturating_sub(500);
@@ -194,7 +194,12 @@ fn test_skip_vs_slice_performance() {
     let start_time = Instant::now();
     for _ in 0..iterations {
         let mut count = 0usize;
-        for (idx, token) in timed_tokens.iter().enumerate().skip(start).take(end - start) {
+        for (idx, token) in timed_tokens
+            .iter()
+            .enumerate()
+            .skip(start)
+            .take(end - start)
+        {
             let _ = token.token.word.chars().count();
             let _ = idx;
             count += 1;
@@ -216,7 +221,16 @@ fn test_skip_vs_slice_performance() {
     }
     let slice_elapsed = start_time.elapsed();
 
-    println!("enumerate().skip(): {:>6.1}µs per iteration", skip_elapsed.as_micros() as f64 / iterations as f64);
-    println!("slice indexing:     {:>6.1}µs per iteration", slice_elapsed.as_micros() as f64 / iterations as f64);
-    println!("Speedup: {:.1}x", skip_elapsed.as_micros() as f64 / slice_elapsed.as_micros() as f64);
+    println!(
+        "enumerate().skip(): {:>6.1}µs per iteration",
+        skip_elapsed.as_micros() as f64 / iterations as f64
+    );
+    println!(
+        "slice indexing:     {:>6.1}µs per iteration",
+        slice_elapsed.as_micros() as f64 / iterations as f64
+    );
+    println!(
+        "Speedup: {:.1}x",
+        skip_elapsed.as_micros() as f64 / slice_elapsed.as_micros() as f64
+    );
 }

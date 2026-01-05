@@ -154,7 +154,8 @@ const fn table_row(block: &BlockContext) -> Option<usize> {
 /// Compute column widths for table cells in a set of lines
 /// Returns a map from (row, column) to max width needed for that column
 fn compute_table_column_widths(lines: &[DocLine]) -> std::collections::HashMap<usize, usize> {
-    let mut column_widths: std::collections::HashMap<usize, usize> = std::collections::HashMap::new();
+    let mut column_widths: std::collections::HashMap<usize, usize> =
+        std::collections::HashMap::new();
 
     for line in lines {
         if line.is_blank || line.tokens.is_empty() {
@@ -464,10 +465,16 @@ fn render_line(
 
         let mut word_style = style; // Base gray style
         if styling_enabled {
-            if matches!(&token.token.style, TokenStyle::Bold | TokenStyle::BoldItalic) {
+            if matches!(
+                &token.token.style,
+                TokenStyle::Bold | TokenStyle::BoldItalic
+            ) {
                 word_style = word_style.add_modifier(Modifier::BOLD);
             }
-            if matches!(&token.token.style, TokenStyle::Italic | TokenStyle::BoldItalic) {
+            if matches!(
+                &token.token.style,
+                TokenStyle::Italic | TokenStyle::BoldItalic
+            ) {
                 word_style = word_style.add_modifier(Modifier::ITALIC);
             }
         }

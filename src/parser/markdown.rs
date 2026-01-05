@@ -345,7 +345,8 @@ fn enter_node(
 
             // Headings persist (don't pop) until another heading replaces them
             // Remove any existing heading from parent stack first
-            ctx.parent_stack.retain(|h| !matches!(h, BlockHint::Heading(_)));
+            ctx.parent_stack
+                .retain(|h| !matches!(h, BlockHint::Heading(_)));
             ctx.push_parent(BlockHint::Heading(level));
         }
     } else if node.is::<Paragraph>() {

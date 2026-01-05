@@ -19,8 +19,11 @@ fn test_version_flag() {
         "Version output should contain 'rsvp-term'"
     );
     // Check version format: X.Y.Z
-    let has_version = stdout
-        .split_whitespace()
-        .any(|word| word.split('.').count() == 3 && word.chars().all(|c| c.is_ascii_digit() || c == '.'));
-    assert!(has_version, "Version output should contain version number (X.Y.Z format), got: {stdout}");
+    let has_version = stdout.split_whitespace().any(|word| {
+        word.split('.').count() == 3 && word.chars().all(|c| c.is_ascii_digit() || c == '.')
+    });
+    assert!(
+        has_version,
+        "Version output should contain version number (X.Y.Z format), got: {stdout}"
+    );
 }

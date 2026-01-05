@@ -99,7 +99,9 @@ fn test_context_no_reflow_on_advance() {
 #[test]
 fn test_list_items_have_structure_modifier_on_first_word() {
     let parser = MarkdownParser::new();
-    let doc = parser.parse_str("- Item one\n- Item two\n- Item three").unwrap();
+    let doc = parser
+        .parse_str("- Item one\n- Item two\n- Item three")
+        .unwrap();
 
     let first_words: Vec<_> = doc
         .tokens
@@ -115,12 +117,16 @@ fn test_list_items_have_structure_modifier_on_first_word() {
 #[test]
 fn test_list_items_should_be_separate_lines() {
     let parser = MarkdownParser::new();
-    let doc = parser.parse_str("- First item\n- Second item\n- Third item").unwrap();
+    let doc = parser
+        .parse_str("- First item\n- Second item\n- Third item")
+        .unwrap();
 
     let new_line_triggers: Vec<_> = doc
         .tokens
         .iter()
-        .filter(|t| matches!(t.block, BlockContext::ListItem(_)) && t.timing_hint.structure_modifier > 0)
+        .filter(|t| {
+            matches!(t.block, BlockContext::ListItem(_)) && t.timing_hint.structure_modifier > 0
+        })
         .collect();
 
     assert_eq!(new_line_triggers.len(), 3);

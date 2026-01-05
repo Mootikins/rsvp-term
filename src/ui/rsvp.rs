@@ -1,8 +1,6 @@
 use crate::app::App;
 use crate::types::TokenStyle;
-use crate::ui::common::{
-    fade_char_left, BRIGHTNESS_SOLID_END, FADE_TOTAL, GUIDE_COLOR,
-};
+use crate::ui::common::{fade_char_left, BRIGHTNESS_SOLID_END, FADE_TOTAL, GUIDE_COLOR};
 use crate::ui::GUTTER_WIDTH;
 use ratatui::{
     layout::Rect,
@@ -47,8 +45,7 @@ pub fn render(frame: &mut Frame, app: &App, area: Rect, gutter_area: Option<Rect
     let (top_line, bottom_line) = if app.hint_chars_enabled {
         // Build faded guide lines
         let top_spans = build_faded_guide_line(area.width as usize, left_padding + orp_pos, '┬');
-        let bottom_spans =
-            build_faded_guide_line(area.width as usize, left_padding + orp_pos, '┴');
+        let bottom_spans = build_faded_guide_line(area.width as usize, left_padding + orp_pos, '┴');
         (top_spans, bottom_spans)
     } else {
         // Simple guide lines
