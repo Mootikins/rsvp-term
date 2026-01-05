@@ -6,6 +6,7 @@ fn test_token_creation() {
         word: "hello".to_string(),
         style: TokenStyle::Normal,
         block: BlockContext::Paragraph,
+        parent_context: None,
         timing_hint: TimingHint::default(),
     };
     assert_eq!(token.word, "hello");

@@ -6,6 +6,7 @@ fn make_token(word: &str, hint: TimingHint) -> Token {
         word: word.to_string(),
         style: TokenStyle::Normal,
         block: BlockContext::Paragraph,
+        parent_context: None,
         timing_hint: hint,
     }
 }

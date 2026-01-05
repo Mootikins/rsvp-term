@@ -1,4 +1,35 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BlockHint {
+    Heading(u8),
+    Quote,
+    BulletList,
+    OrderedList,
+    Table,
+    Callout(String),
+}
+
+impl BlockHint {
+    /// Returns the hint characters for display in the gutter
+    #[must_use]
+    pub fn hint_chars(&self) -> &str {
+        match self {
+            BlockHint::Heading(1) => "#",
+            BlockHint::Heading(2) => "##",
+            BlockHint::Heading(3) => "###",
+            BlockHint::Heading(4) => "####",
+            BlockHint::Heading(5) => "#####",
+            BlockHint::Heading(6) => "######",
+            BlockHint::Heading(_) => "#",
+            BlockHint::Quote => ">",
+            BlockHint::BulletList => "-",
+            BlockHint::OrderedList => "1.",
+            BlockHint::Table => "|",
+            BlockHint::Callout(_) => "[!]",
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenStyle {
     Normal,
     Bold,
@@ -30,6 +61,7 @@ pub struct Token {
     pub word: String,
     pub style: TokenStyle,
     pub block: BlockContext,
+    pub parent_context: Option<BlockHint>,
     pub timing_hint: TimingHint,
 }
 
@@ -46,4 +78,20 @@ pub struct Section {
     pub level: u8,
     pub token_start: usize,
     pub token_end: usize,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_block_hint_display() {
+        assert_eq!(BlockHint::Heading(1).hint_chars(), "#");
+        assert_eq!(BlockHint::Heading(2).hint_chars(), "##");
+        assert_eq!(BlockHint::Quote.hint_chars(), ">");
+        assert_eq!(BlockHint::BulletList.hint_chars(), "-");
+        assert_eq!(BlockHint::OrderedList.hint_chars(), "1.");
+        assert_eq!(BlockHint::Table.hint_chars(), "|");
+        assert_eq!(BlockHint::Callout("note".into()).hint_chars(), "[!]");
+    }
 }

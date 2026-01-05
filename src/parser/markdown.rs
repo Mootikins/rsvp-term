@@ -437,6 +437,7 @@ fn enter_node(
                     word,
                     style: ctx.current_style(),
                     block: ctx.current_block(),
+                    parent_context: None,
                     timing_hint,
                 });
 

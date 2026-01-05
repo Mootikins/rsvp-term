@@ -11,6 +11,7 @@ fn make_timed_token(word: &str) -> TimedToken {
             word: word.to_string(),
             style: TokenStyle::Normal,
             block: BlockContext::Paragraph,
+            parent_context: None,
             timing_hint: TimingHint::default(),
         },
         duration_ms: 200,
