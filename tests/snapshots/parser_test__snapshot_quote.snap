@@ -7,7 +7,9 @@ expression: result.tokens
         word: "This",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -18,7 +20,9 @@ expression: result.tokens
         word: "is",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -29,7 +33,9 @@ expression: result.tokens
         word: "a",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -40,7 +46,9 @@ expression: result.tokens
         word: "quote",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -51,7 +59,9 @@ expression: result.tokens
         word: "with",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -62,7 +72,9 @@ expression: result.tokens
         word: "multiple",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 40,
             punctuation_modifier: 0,
@@ -73,7 +85,9 @@ expression: result.tokens
         word: "lines",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Quote,
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,

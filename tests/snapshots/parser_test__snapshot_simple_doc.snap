@@ -9,7 +9,11 @@ expression: result.tokens
         block: Heading(
             1,
         ),
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -20,7 +24,11 @@ expression: result.tokens
         word: "This",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -31,7 +39,11 @@ expression: result.tokens
         word: "is",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -42,7 +54,11 @@ expression: result.tokens
         word: "bold",
         style: Bold,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -53,7 +69,11 @@ expression: result.tokens
         word: "and",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -64,7 +84,11 @@ expression: result.tokens
         word: "italic",
         style: Italic,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -75,7 +99,11 @@ expression: result.tokens
         word: "text.",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                1,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 200,
@@ -88,7 +116,11 @@ expression: result.tokens
         block: Heading(
             2,
         ),
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                2,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 0,
             punctuation_modifier: 0,
@@ -99,7 +131,11 @@ expression: result.tokens
         word: "Another",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                2,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 20,
             punctuation_modifier: 0,
@@ -110,7 +146,11 @@ expression: result.tokens
         word: "paragraph.",
         style: Normal,
         block: Paragraph,
-        parent_context: None,
+        parent_context: Some(
+            Heading(
+                2,
+            ),
+        ),
         timing_hint: TimingHint {
             word_length_modifier: 80,
             punctuation_modifier: 200,

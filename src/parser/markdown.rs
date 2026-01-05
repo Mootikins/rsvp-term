@@ -19,7 +19,7 @@ use markdown_it::{plugins::cmark, plugins::extra, MarkdownIt, Node};
 
 use crate::parser::traits::{DocumentParser, ParseError, ParsedDocument};
 use crate::timing::generate_timing_hint;
-use crate::types::{BlockContext, Section, Token, TokenStyle};
+use crate::types::{BlockContext, BlockHint, Section, Token, TokenStyle};
 
 /// Markdown parser that extracts tokens for RSVP reading.
 pub struct MarkdownParser {
@@ -70,6 +70,8 @@ struct ParserContext {
     in_callout: bool,
     /// Whether we're inside inline code (preserves whitespace)
     in_inline_code: bool,
+    /// Stack of parent block hints for hierarchy tracking
+    parent_stack: Vec<BlockHint>,
 }
 
 impl ParserContext {
@@ -87,6 +89,7 @@ impl ParserContext {
             is_last_table_cell: false,
             in_callout: false,
             in_inline_code: false,
+            parent_stack: Vec::new(),
         }
     }
 
@@ -132,6 +135,18 @@ impl ParserContext {
         if self.block_stack.len() > 1 {
             self.block_stack.pop();
         }
+    }
+
+    fn current_parent(&self) -> Option<BlockHint> {
+        self.parent_stack.last().cloned()
+    }
+
+    fn push_parent(&mut self, hint: BlockHint) {
+        self.parent_stack.push(hint);
+    }
+
+    fn pop_parent(&mut self) {
+        self.parent_stack.pop();
     }
 
     const fn should_skip(&self) -> bool {
@@ -275,6 +290,7 @@ fn walk_ast(
     if restore_quote_depth {
         ctx.quote_depth = ctx.quote_depth.saturating_sub(1);
         ctx.in_callout = false;
+        ctx.pop_parent();
     }
 }
 
@@ -320,6 +336,11 @@ fn enter_node(
                 token_start: tokens.len(),
                 token_end: 0, // Will be updated later
             });
+
+            // Headings persist (don't pop) until another heading replaces them
+            // Remove any existing heading from parent stack first
+            ctx.parent_stack.retain(|h| !matches!(h, BlockHint::Heading(_)));
+            ctx.push_parent(BlockHint::Heading(level));
         }
     } else if node.is::<Paragraph>() {
         // Don't push paragraph context if inside a callout (use callout context instead)
@@ -359,6 +380,7 @@ fn enter_node(
         }
         restore_block = true;
         restore_quote_depth = true;
+        ctx.push_parent(BlockHint::Quote);
     } else if node.is::<BulletList>() || node.is::<OrderedList>() {
         ctx.list_depth += 1;
         restore_list_depth = true;
@@ -437,7 +459,7 @@ fn enter_node(
                     word,
                     style: ctx.current_style(),
                     block: ctx.current_block(),
-                    parent_context: None,
+                    parent_context: ctx.current_parent(),
                     timing_hint,
                 });
 
@@ -565,5 +587,28 @@ mod tests {
         assert_eq!(result.tokens.len(), 2);
         assert_eq!(result.tokens[0].word, "Hello");
         assert_eq!(result.tokens[1].word, "world");
+    }
+
+    #[test]
+    fn test_list_item_has_no_parent_in_flat_list() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("- Item one").unwrap();
+        assert!(result.tokens[0].parent_context.is_none());
+    }
+
+    #[test]
+    fn test_list_under_heading_has_heading_parent() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("## Section\n\n- Item").unwrap();
+        let item_token = result.tokens.iter().find(|t| t.word == "Item").unwrap();
+        assert_eq!(item_token.parent_context, Some(BlockHint::Heading(2)));
+    }
+
+    #[test]
+    fn test_nested_quote_has_quote_parent() {
+        let parser = MarkdownParser::new();
+        let result = parser.parse_str("> Outer\n>\n>> Inner").unwrap();
+        let inner = result.tokens.iter().find(|t| t.word == "Inner").unwrap();
+        assert_eq!(inner.parent_context, Some(BlockHint::Quote));
     }
 }
