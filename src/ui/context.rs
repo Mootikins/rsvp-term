@@ -68,13 +68,17 @@ fn compute_document_lines(app: &App, width: usize, max_line_chars: usize) -> Vec
         let was_in_table = last_table_row.is_some();
 
         // Detect block transitions
-        let block_changed = last_block.is_some_and(|b| {
-            if is_table_cell && was_in_table {
-                current_table_row != last_table_row
-            } else {
-                b != &token.token.block
-            }
-        });
+        let is_new_list_item = matches!(&token.token.block, BlockContext::ListItem(_))
+            && token.token.timing_hint.structure_modifier > 0;
+
+        let block_changed = is_new_list_item
+            || last_block.is_some_and(|b| {
+                if is_table_cell && was_in_table {
+                    current_table_row != last_table_row
+                } else {
+                    b != &token.token.block
+                }
+            });
 
         let table_transition = was_in_table != is_table_cell;
         let word_width = token.token.word.chars().count() + 1;
