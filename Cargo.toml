@@ -4,6 +4,10 @@ version = "0.2.1"
 edition = "2021"
 description = "TUI for RSVP reading of markdown prose"
 license = "MIT"
+repository = "https://github.com/Mootikins/rsvp-term"
+homepage = "https://github.com/Mootikins/rsvp-term"
+keywords = ["rsvp", "reading", "tui", "markdown", "speed-reading"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 ratatui = "0.30"
