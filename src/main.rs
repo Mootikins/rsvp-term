@@ -122,6 +122,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         cli.context_width,
         !cli.no_hint_chars,
         !cli.no_styling,
+        true, // context enabled by default
     );
 
     // Setup terminal
@@ -179,6 +180,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             app.skip_sentence()
                         }
                         (ViewMode::Reading, KeyCode::Char('o')) => app.toggle_outline(),
+                        (ViewMode::Reading, KeyCode::Char('c')) => app.toggle_context_tokens(),
 
                         // Outline mode
                         (ViewMode::Outline, KeyCode::Char('j') | KeyCode::Down) => {

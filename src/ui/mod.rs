@@ -69,7 +69,12 @@ fn render_reading_view(frame: &mut Frame, app: &App, area: ratatui::layout::Rect
         ])
         .split(content_area);
 
-    context::render_before(frame, app, chunks[0], gutter_area);
+    // Render context only when enabled
+    if app.context_enabled() {
+        context::render_before(frame, app, chunks[0], gutter_area);
+    }
     rsvp::render(frame, app, chunks[1], gutter_area);
-    context::render_after(frame, app, chunks[2], gutter_area);
+    if app.context_enabled() {
+        context::render_after(frame, app, chunks[2], gutter_area);
+    }
 }

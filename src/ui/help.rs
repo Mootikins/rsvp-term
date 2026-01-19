@@ -32,6 +32,7 @@ pub fn render(frame: &mut Frame, area: Rect) {
         Line::from("h/Left    Rewind sentence"),
         Line::from("l/Right   Skip sentence"),
         Line::from("o         Toggle outline"),
+        Line::from("c         Toggle context"),
         Line::from("q         Quit"),
         Line::from("?         Toggle help"),
         Line::from(""),

@@ -16,6 +16,7 @@ pub struct App {
     outline_selection: usize,
     show_help: bool,
     context_width: usize,
+    pub context_enabled: bool,
     pub hint_chars_enabled: bool,
     pub styling_enabled: bool,
 }
@@ -25,7 +26,7 @@ pub const DEFAULT_CONTEXT_WIDTH: usize = 100;
 
 impl App {
     pub fn new(tokens: Vec<TimedToken>, sections: Vec<Section>) -> Self {
-        Self::with_options(tokens, sections, DEFAULT_CONTEXT_WIDTH, true, true)
+        Self::with_options(tokens, sections, DEFAULT_CONTEXT_WIDTH, true, true, true)
     }
 
     pub fn with_context_width(
@@ -33,7 +34,7 @@ impl App {
         sections: Vec<Section>,
         context_width: usize,
     ) -> Self {
-        Self::with_options(tokens, sections, context_width, true, true)
+        Self::with_options(tokens, sections, context_width, true, true, true)
     }
 
     pub fn with_options(
@@ -42,6 +43,7 @@ impl App {
         context_width: usize,
         hint_chars_enabled: bool,
         styling_enabled: bool,
+        context_enabled: bool,
     ) -> Self {
         Self {
             tokens,
@@ -53,6 +55,7 @@ impl App {
             outline_selection: 0,
             show_help: false,
             context_width,
+            context_enabled,
             hint_chars_enabled,
             styling_enabled,
         }
@@ -161,9 +164,19 @@ impl App {
         self.show_help = !self.show_help;
     }
 
+    /// Toggle visibility of context tokens (above/below RSVP line)
+    pub fn toggle_context_tokens(&mut self) {
+        self.context_enabled = !self.context_enabled;
+    }
+
     #[must_use]
     pub const fn context_width(&self) -> usize {
         self.context_width
+    }
+
+    #[must_use]
+    pub const fn context_enabled(&self) -> bool {
+        self.context_enabled
     }
 
     #[must_use]
