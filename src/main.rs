@@ -52,6 +52,10 @@ struct Cli {
     /// Disable bold/italic/code styling
     #[arg(long)]
     no_styling: bool,
+
+    /// Initial reading speed in words per minute (default: 300)
+    #[arg(short = 'w', long, default_value_t = 300)]
+    wpm: u16,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,7 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Convert to timed tokens
-    let wpm = 300u16;
+    let wpm = cli.wpm;
     let timed_tokens: Vec<TimedToken> = doc
         .tokens
         .into_iter()
@@ -124,6 +128,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         !cli.no_styling,
         true, // context enabled by default
     );
+    app.set_wpm(cli.wpm);
 
     // Setup terminal
     enable_raw_mode()?;

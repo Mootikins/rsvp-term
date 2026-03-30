@@ -109,6 +109,10 @@ impl App {
         self.paused = !self.paused;
     }
 
+    pub fn set_wpm(&mut self, wpm: u16) {
+        self.wpm = wpm.clamp(100, 1000);
+    }
+
     pub fn increase_wpm(&mut self) {
         self.wpm = (self.wpm + 25).min(1000);
     }
